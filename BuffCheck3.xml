@@ -1,0 +1,422 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
+..\FrameXML\UI.xsd">
+
+    <Script file="BuffCheck3.lua"/>
+
+    <Button name="BuffCheck3ButtonTemplate" hidden="true" virtual="true" enableMouse="true">
+        <Size>
+            <AbsDimension x="32" y="32"/>
+        </Size>
+        <Scripts>
+            <OnLoad>
+                self:RegisterForClicks("RightButtonDown")
+                if not self.lockedHighlight then
+                    getglobal(self:GetName().."Highlight"):Hide()
+                end
+                GameTooltip:Hide()
+            </OnLoad>
+            <OnClick>
+                BuffCheck3:ButtonOnClick(self.consume)
+            </OnClick>
+            <OnEnter>
+                getglobal(self:GetName().."Highlight"):Show()
+                if self.texture ~= "Interface\\Icons\\Spell_Nature_WispSplode" then
+                    BuffCheck3:ShowTooltip(self.consume, self:GetID())
+                end
+            </OnEnter>
+            <OnLeave>
+                getglobal(self:GetName().."Highlight"):Hide()
+                GameTooltip:Hide()
+                if not SpellIsTargeting() then
+                    BuffCheck3:HideWeaponButtons()
+                end
+            </OnLeave>
+        </Scripts>
+        <Layers>
+            <Layer level="BACKGROUND">
+                <Texture name="$parentIcon"/>
+            </Layer>
+            <Layer level="ARTWORK">
+                <FontString name="$parentCount" font="GameFontNormal" justifyH="LEFT">
+                    <Size>
+                        <AbsDimension x="20" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="LEFT" relativeTo="$parentIcon" relativePoint="RIGHT">
+                            <Offset>
+                                <AbsDimension x="-10" y="-10"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+                <FontString name="$parentDuration" font="GameFontNormal" justifyH="LEFT">
+                    <Size>
+                        <AbsDimension x="20" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="LEFT" relativeTo="$parentIcon" relativePoint="RIGHT">
+                            <Offset>
+                                <AbsDimension x="-25" y="2"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+                <Texture name="$parentHighlight" file="Interface\QuestFrame\UI-QuestLogTitleHighlight" hidden="false" alphaMode="ADD">
+                    <Size>
+                        <AbsDimension x="32" y="32"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="TOPLEFT" relativeTo="$parentIcon"/>
+                    </Anchors>
+                </Texture>
+            </Layer>
+        </Layers>
+    </Button>
+
+    <Button name="BuffCheck3WeaponButtonTemplate" virtual="true" hidden="true" enableMouse="true" toplevel="true">
+        <Size>
+            <AbsDimension x="32" y="32"/>
+        </Size>
+        <Scripts>
+            <OnLoad>
+                    if not self.lockedHighlight then
+                        getglobal(self:GetName().."Highlight"):Hide()
+                    end
+                    GameTooltip:Hide()
+            </OnLoad>
+            <OnClick>
+                    BuffCheck3:WeaponButtonOnClick(self:GetID())
+            </OnClick>
+            <OnEnter>
+                    getglobal(self:GetName().."Highlight"):Show()
+                    BuffCheck3:ShowWeaponTooltip(self:GetID())
+            </OnEnter>
+            <OnLeave>
+                    getglobal(self:GetName().."Highlight"):Hide()
+                    GameTooltip:Hide()
+                    if not SpellIsTargeting() then
+                        BuffCheck3:HideWeaponButtons()
+                    end
+            </OnLeave>
+        </Scripts>
+        <Layers>
+            <Layer level="BACKGROUND">
+                <Texture name="$parentIcon"/>
+            </Layer>
+            <Layer level="ARTWORK">
+                <Texture name="$parentHighlight" file="Interface\QuestFrame\UI-QuestLogTitleHighlight" hidden="false" alphaMode="ADD">
+                    <Size>
+                        <AbsDimension x="32" y="32"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="TOPLEFT" relativeTo="$parentIcon"/>
+                    </Anchors>
+                </Texture>
+            </Layer>
+        </Layers>
+    </Button>
+
+    <Frame name="BuffCheck3WeaponFrame" toplevel="true" movable="false" parent="UIParent" enableMouse="true" hidden="true">
+        <TitleRegion setAllPoints="true"/>
+        <Size>
+            <AbsDimension x="68" y="32" />
+        </Size>
+        <Anchors>
+            <Anchor point="CENTER" />
+        </Anchors>
+        <Scripts>
+            <OnLoad>
+                self:SetClampedToScreen(true)
+            </OnLoad>
+        </Scripts>
+        <Frames>
+            <Button name="BuffCheck3WeaponButton1" inherits="BuffCheck3WeaponButtonTemplate" id="1" hidden="true">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3WeaponFrame">
+                        <Offset>
+                            <AbsDimension x="0" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+            <Button name="BuffCheck3WeaponButton2" inherits="BuffCheck3WeaponButtonTemplate" id="2" hidden="true">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3WeaponButton1">
+                        <Offset>
+                            <AbsDimension x="36" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+        </Frames>
+    </Frame>
+
+    <Frame name="BuffCheck3Frame" toplevel="true" movable="true" parent="UIParent" enableMouse="true" hidden="false" mixin="BuffCheck3">
+        <TitleRegion setAllPoints="true"/>
+        <Size>
+            <AbsDimension x="54" y="54" />
+        </Size>
+        <Anchors>
+            <Anchor point="CENTER" />
+        </Anchors>
+        <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border"
+                  tile="true">
+            <BackgroundInsets>
+                <AbsInset left="11" right="12" top="12" bottom="11" />
+                <Size>
+                    <AbsDimension x="54" y="54" />
+                </Size>
+            </BackgroundInsets>
+            <TileSize>
+                <AbsValue val="32" />
+            </TileSize>
+            <EdgeSize>
+                <AbsValue val="32" />
+            </EdgeSize>
+        </Backdrop>
+        <Scripts>
+            <OnLoad>
+				BuffCheck3:OnLoad(self)
+                self:RegisterForDrag("LeftButton")
+			</OnLoad>
+            <OnEvent method="OnEvent" />
+            <OnDragStart>
+                if BuffCheck3_Config["locked"] ~= false then
+                    self:StartMoving()
+                end
+            </OnDragStart>
+            <OnDragStop>
+                self:StopMovingOrSizing()
+            </OnDragStop>
+        </Scripts>
+
+        <Frames>
+
+            <Button name="BuffCheck3Button1" inherits="BuffCheck3ButtonTemplate" id="1">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3Frame">
+                        <Offset>
+                            <AbsDimension x="12" y="-12"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+            <Button name="BuffCheck3Button2" inherits="BuffCheck3ButtonTemplate" id="2">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3Button1">
+                        <Offset>
+                            <AbsDimension x="36" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+            <Button name="BuffCheck3Button3" inherits="BuffCheck3ButtonTemplate" id="3">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3Button2">
+                        <Offset>
+                            <AbsDimension x="36" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+            <Button name="BuffCheck3Button4" inherits="BuffCheck3ButtonTemplate" id="4">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3Button3">
+                        <Offset>
+                            <AbsDimension x="36" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+            <Button name="BuffCheck3Button5" inherits="BuffCheck3ButtonTemplate" id="5">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3Button4">
+                        <Offset>
+                            <AbsDimension x="36" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+            <Button name="BuffCheck3Button6" inherits="BuffCheck3ButtonTemplate" id="6">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3Button5">
+                        <Offset>
+                            <AbsDimension x="36" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+            <Button name="BuffCheck3Button7" inherits="BuffCheck3ButtonTemplate" id="7">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3Button6">
+                        <Offset>
+                            <AbsDimension x="36" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+            <Button name="BuffCheck3Button8" inherits="BuffCheck3ButtonTemplate" id="8">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3Button7">
+                        <Offset>
+                            <AbsDimension x="36" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+            <Button name="BuffCheck3Button9" inherits="BuffCheck3ButtonTemplate" id="9">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3Button8">
+                        <Offset>
+                            <AbsDimension x="36" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+            <Button name="BuffCheck3Button10" inherits="BuffCheck3ButtonTemplate" id="10">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3Button9">
+                        <Offset>
+                            <AbsDimension x="36" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+            <Button name="BuffCheck3Button11" inherits="BuffCheck3ButtonTemplate" id="11">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3Button10">
+                        <Offset>
+                            <AbsDimension x="36" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+            <Button name="BuffCheck3Button12" inherits="BuffCheck3ButtonTemplate" id="12">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3Button11">
+                        <Offset>
+                            <AbsDimension x="36" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+            <Button name="BuffCheck3Button13" inherits="BuffCheck3ButtonTemplate" id="13">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3Button12">
+                        <Offset>
+                            <AbsDimension x="36" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+            <Button name="BuffCheck3Button14" inherits="BuffCheck3ButtonTemplate" id="14">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3Button13">
+                        <Offset>
+                            <AbsDimension x="36" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+            <Button name="BuffCheck3Button15" inherits="BuffCheck3ButtonTemplate" id="15">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3Button14">
+                        <Offset>
+                            <AbsDimension x="36" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+            <Button name="BuffCheck3Button16" inherits="BuffCheck3ButtonTemplate" id="16">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3Button15">
+                        <Offset>
+                            <AbsDimension x="36" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+            <Button name="BuffCheck3Button17" inherits="BuffCheck3ButtonTemplate" id="17">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3Button16">
+                        <Offset>
+                            <AbsDimension x="36" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+            <Button name="BuffCheck3Button18" inherits="BuffCheck3ButtonTemplate" id="18">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3Button17">
+                        <Offset>
+                            <AbsDimension x="36" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+            <Button name="BuffCheck3Button19" inherits="BuffCheck3ButtonTemplate" id="19">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3Button18">
+                        <Offset>
+                            <AbsDimension x="36" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+            <Button name="BuffCheck3Button20" inherits="BuffCheck3ButtonTemplate" id="20">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3Button19">
+                        <Offset>
+                            <AbsDimension x="36" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+            <Button name="BuffCheck3Button21" inherits="BuffCheck3ButtonTemplate" id="21">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3Button20">
+                        <Offset>
+                            <AbsDimension x="36" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+            <Button name="BuffCheck3Button22" inherits="BuffCheck3ButtonTemplate" id="22">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3Button21">
+                        <Offset>
+                            <AbsDimension x="36" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+            <Button name="BuffCheck3Button23" inherits="BuffCheck3ButtonTemplate" id="23">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3Button22">
+                        <Offset>
+                            <AbsDimension x="36" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+            <Button name="BuffCheck3Button24" inherits="BuffCheck3ButtonTemplate" id="24">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3Button23">
+                        <Offset>
+                            <AbsDimension x="36" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+            <Button name="BuffCheck3Button25" inherits="BuffCheck3ButtonTemplate" id="25">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeTo="BuffCheck3Button24">
+                        <Offset>
+                            <AbsDimension x="36" y="0"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+        </Frames>
+    </Frame>
+</Ui>
