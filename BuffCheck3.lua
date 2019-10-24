@@ -8,7 +8,40 @@ BuffCheck3_SavedConsumes = {}
 BuffCheck3_Config = {}
 BuffCheck3.BagContents = {}
 
-BuffCheck3_PrintFormat = "|c00f7f26c%s|r";
+BuffCheck3_TimeSinceLastUpdate = 0
+BuffCheck3_PrintFormat = "|c00f7f26c%s|r"
+
+BuffCheck3.AvailableButtons = {}
+BuffCheck3.AddedButtons = {}
+
+BuffCheck3.LockedBackdrop = {
+    bgFile = "Interface/DialogFrame/UI-DialogBox-Background",
+    tileSize = 32,
+    edgeFile = "Interface/DialogFrame/UI-DialogBox-Border",
+    tile = true,
+    tileEdge = false,
+    edgeSize = 1,
+    insets = {
+        top = 12,
+        right = 12,
+        left = 11,
+        bottom = 11
+    }
+}
+BuffCheck3.UnlockedBackdrop = {
+    bgFile = "Interface/DialogFrame/UI-DialogBox-Background",
+    tileSize = 32,
+    edgeFile = "Interface/DialogFrame/UI-DialogBox-Border",
+    tile = true,
+    tileEdge = true,
+    edgeSize = 32,
+    insets = {
+        top = 12,
+        right = 12,
+        left = 11,
+        bottom = 11
+    }
+}
 
 SLASH_BUFFCHECK1 = "/bc"
 SLASH_BUFFCHECK2 = "/buffcheck"
@@ -23,16 +56,12 @@ function SlashCmdList.BUFFCHECK(args)
     if BuffCheck3:HasValue(words, "update") then
         BuffCheck3:ShowConsumeList()
     elseif BuffCheck3:HasValue(words, "show") then
-        BuffCheck3_Config["showing"] = true
         BuffCheck3:ShowFrame()
     elseif BuffCheck3:HasValue(words, "hide") then
-        BuffCheck3_Config["showing"] = false
         BuffCheck3:HideFrame()
     elseif BuffCheck3:HasValue(words, "lock") then
-        BuffCheck3_Config["locked"] = true
         BuffCheck3:LockFrame()
     elseif BuffCheck3:HasValue(words, "unlock") then
-        BuffCheck3_Config["locked"] = false
         BuffCheck3:UnlockFrame()
     elseif BuffCheck3:HasValue(words, "resize") then
         local size = BuffCheck3:GetSizeFromArgs(words)
@@ -46,10 +75,6 @@ function SlashCmdList.BUFFCHECK(args)
     end
 end
 
-function BuffCheck3:GetLinkFromArgs(args)
-
-end
-
 function BuffCheck3:GetSizeFromArgs(args)
     if(args[2] and tonumber(args[2]) ~= nil) then
         return tonumber(args[2])
@@ -59,23 +84,29 @@ end
 
 function BuffCheck3:OnLoad(self)
     self:RegisterEvent("ADDON_LOADED")
-    -- self:RegisterEvent("PLAYER_AURAS_CHANGED")
+    -- self:RegisterEvent("PLAYER_AURAS_CHANGED") -- deprecated event
     self:RegisterEvent("UNIT_INVENTORY_CHANGED")
-    -- self:RegisterEvent("PARTY_MEMBERS_CHANGED")
     self:RegisterEvent("BAG_UPDATE")
 end
 
+-- function BuffCheck3:SetDefaultConfig()
+--     DEFAULT_CHAT_FRAME:AddMessage("setting to default")
+--     BuffCheck3_Config["locked"] = false
+--     BuffCheck3_Config["showing"] = true
+--     BuffCheck3_Config["scale"] = BuffCheck3_DefaultFrameSize
+-- end
+
 function BuffCheck3:Init()
-    if buffcheck2_Config["locked"] then
-        BuffCheck3:LockFrame()
+    if not BuffCheck3_Config["locked"] then
+        BuffCheck3:UnlockFrame(false)
     else
-        BuffCheck3:UnlockFrame()
+        BuffCheck3:LockFrame(false)
     end
 
-    if BuffCheck3_Config["showing"] then
-        BuffCheck3:ShowFrame()
+    if not BuffCheck3_Config["showing"] then
+        BuffCheck3:HideFrame(false)
     else
-        BuffCheck3:HideFrame()
+        BuffCheck3:ShowFrame(false)
     end
 
     if BuffCheck3_Config["scale"] then
@@ -105,13 +136,9 @@ function BuffCheck3:Init()
     BuffCheck3:SendMessage("Init Successful")
 end
 
-function BuffCheck3:OnEvent(self, event)
-    if event == "ADDON_LOADED" then
+function BuffCheck3:OnEvent(event, arg1)
+    if event == "ADDON_LOADED" and arg1 == "BuffCheck3" then
         BuffCheck3:Init()
-    elseif event == "PLAYER_AURAS_CHANGED" or event == "UNIT_INVENTORY_CHANGED" then
-        BuffCheck3:UpdateFrame()
-    elseif event == "PARTY_MEMBERS_CHANGED" then
-        BuffCheck3:CheckGroupUpdate() -- show if in raid
     elseif event == "BAG_UPDATE" then
         BuffCheck3:UpdateBagContents()
         BuffCheck3:UpdateItemCounts()
@@ -119,37 +146,216 @@ function BuffCheck3:OnEvent(self, event)
 end
 
 --=================================================================
+-- OnUpdate handler - crucial to this addon
+
+function BuffCheck3_OnUpdate(self, elapsed)
+    BuffCheck3_TimeSinceLastUpdate = BuffCheck3_TimeSinceLastUpdate + elapsed
+    if BuffCheck3_TimeSinceLastUpdate > 1 then
+        BuffCheck3_TimeSinceLastUpdate = 0
+
+    end
+end
+
+--=================================================================
 -- Consume List Functions
 
-function BuffCheck3:ShowConsumeList()
+function BuffCheck3_MoveToAvailable(self)
+    local index = BuffCheck3:GetIndexInTable(BuffCheck3_SavedConsumes, self.consume)
+    if index == -1 then
+        BuffCheck3:SendMessage("Error - could find " .. tostring(consume) .. " in BuffCheck3_SavedConsumes")
+        return
+    end
+    table.remove(BuffCheck3_SavedConsumes, index)
+    table.insert(BuffCheck3.AvailableButtons, self)
+    local index = BuffCheck3:GetIndexInTable(BuffCheck3.AddedButtons, self)
+    if index ~= -1 then
+        table.remove(BuffCheck3.AddedButtons, index)
+    end
+    BuffCheck3:ShowConsumeButtons()
+end
 
+function BuffCheck3_MoveToAdded(self)
+    table.insert(BuffCheck3_SavedConsumes, self.consume)
+    table.insert(BuffCheck3.AddedButtons, self)
+    local index = BuffCheck3:GetIndexInTable(BuffCheck3.AvailableButtons, self)
+    if index ~= -1 then
+        table.remove(BuffCheck3.AvailableButtons, index)
+    end
+    BuffCheck3:ShowConsumeButtons()
+end
+
+function BuffCheck3:ShowConsumeList()
+    BuffCheck3ConsumeList:Show()
+    BuffCheck3:UpdateBagContents()
+    BuffCheck3:UpdateConsumeList()
 end
 
 function BuffCheck3:HideConsumeList()
+    BuffCheck3ConsumeList:Hide()
+end
 
+function BuffCheck3:ButtonExists(consume)
+    for _, f in pairs(BuffCheck3.AvailableButtons) do
+        if f.consume == consume then
+            return true
+        end
+    end
+    for _, f in pairs(BuffCheck3.AddedButtons) do
+        if f.consume == consume then
+            return true
+        end
+    end
+    return false
 end
 
 function BuffCheck3:UpdateConsumeList()
+    local parent = getglobal("BuffCheck3ConsumeList")
 
+    -- create a button for each consume
+    for consume, _ in pairs(BuffCheck3.BagContents) do
+        -- check if the consume already has a button
+        if not BuffCheck3:ButtonExists(consume) then
+            -- decide if available or added
+            local isadded = BuffCheck3:HasValue(BuffCheck3_SavedConsumes, consume)
+            local fname = "BuffCheck3ConsumeButton" .. (table.getn(BuffCheck3.AvailableButtons)
+                + table.getn(BuffCheck3.AddedButtons))
+
+            -- more info on the item
+            local name, _, quality, _, _, _, _, _, _, texture = GetItemInfo(consume)
+            
+            -- create the button
+            f = CreateFrame("Button", fname, parent, "BuffCheck3ConsumeRowTemplate")
+
+            -- set text
+            local ftext = getglobal(fname.."Name")
+            ftext:SetText(name)
+            local r,g,b = GetItemQualityColor(quality)
+            ftext:SetTextColor(r,g,b)
+            f.consume = consume
+
+            -- set icon
+            local icon = getglobal(fname.."Icon")
+            icon:SetTexture(texture)
+            icon:SetVertexColor(1,1,1)
+
+            -- add to appropriate list
+            if not isadded then
+                table.insert(BuffCheck3.AvailableButtons, f)
+            else
+                table.insert(BuffCheck3.AddedButtons, f)
+            end
+        end
+    end
+    -- show all the buttons
+    BuffCheck3:ShowConsumeButtons()
+end
+
+function BuffCheck3:ShowConsumeButtons()
+    local fheight = 24
+    local prev = getglobal("BuffCheck3ConsumeList")
+    for i, f in ipairs(BuffCheck3.AvailableButtons) do
+        f:ClearAllPoints()
+        if i == 1 then
+            f:SetPoint("TOPLEFT", prev, 15, -fheight*2)
+        else
+            f:SetPoint("TOPLEFT", prev, 0, -fheight)
+        end
+        f:SetScript("OnClick", BuffCheck3_MoveToAdded)
+        prev = f
+    end
+    
+    prev = getglobal("BuffCheck3ConsumeList")
+    for i, f in ipairs(BuffCheck3.AddedButtons) do
+        f:ClearAllPoints()
+        if i == 1 then
+            f:SetPoint("TOP", prev, 106, -fheight*2)
+        else
+            f:SetPoint("TOPLEFT", prev, 0, -fheight)
+        end
+        f:SetScript("OnClick", BuffCheck3_MoveToAvailable)
+        prev = f
+    end
+
+    local numAvail = table.getn(BuffCheck3.AvailableButtons)
+    local numAdded = table.getn(BuffCheck3.AddedButtons)
+    -- update height
+    if numAvail > numAdded then
+        BuffCheck3ConsumeList:SetHeight(60 + numAvail*fheight)
+    else
+        BuffCheck3ConsumeList:SetHeight(60 + numAdded*fheight)
+    end
+
+    -- if either lists are empty add a msg
+    if numAvail == 0 then
+        BuffCheck3:ShowNoAvailableMsg(true)
+    else
+        BuffCheck3:ShowNoAvailableMsg(false)
+    end
+    if numAdded == 0 then
+        BuffCheck3:ShowNoAddedMsg(true)
+    else
+        BuffCheck3:ShowNoAddedMsg(false)
+    end
+end
+
+function BuffCheck3:ShowNoAvailableMsg(shouldshow)
+    if shouldshow then
+        getglobal("BuffCheck3ConsumeListNoAvailableText"):Show()
+    else
+        getglobal("BuffCheck3ConsumeListNoAvailableText"):Hide()
+    end
+end
+
+function BuffCheck3:ShowNoAddedMsg(shouldshow)
+    if shouldshow then
+        getglobal("BuffCheck3ConsumeListNoAddedText"):Show()
+    else
+        getglobal("BuffCheck3ConsumeListNoAddedText"):Hide()
+    end
+end
+
+-- debug only
+function BuffCheck3:PrintAllConsumes()
+    BuffCheck3:tprint(BuffCheck3.BagContents)
 end
 
 --=================================================================
 -- Consume Frame Functions
 
-function BuffCheck3:ShowFrame()
-
+function BuffCheck3:ShowFrame(shouldprint)
+    BuffCheck3_Config["showing"] = true
+    BuffCheck3Frame:Show()
+    if shouldprint ~= false then
+        BuffCheck3:SendMessage("Interface showing")
+    end
 end
 
-function BuffCheck3:HideFrame()
-
+function BuffCheck3:HideFrame(shouldprint)
+    BuffCheck3_Config["showing"] = false
+    BuffCheck3Frame:Hide()
+    if shouldprint ~= false then
+        BuffCheck3:SendMessage("Interface hidden")
+    end
 end
 
-function BuffCheck3:LockFrame()
-
+function BuffCheck3:LockFrame(shouldprint)
+    BuffCheck3_Config["locked"] = true
+    BuffCheck3Frame:EnableMouse(false)
+    -- local backdrop = BuffCheck3Frame:GetBackdrop()
+    -- BuffCheck3:tprint(backdrop)
+    BuffCheck3Frame:SetBackdrop(BuffCheck3.LockedBackdrop)
+    if shouldprint ~= false then
+        BuffCheck3:SendMessage("Interface locked")
+    end
 end
 
-function BuffCheck3:UnlockFrame()
-
+function BuffCheck3:UnlockFrame(shouldprint)
+    BuffCheck3_Config["locked"] = false
+    BuffCheck3Frame:EnableMouse(true)
+    BuffCheck3Frame:SetBackdrop(BuffCheck3.UnlockedBackdrop)
+    if shouldprint ~= false then
+        BuffCheck3:SendMessage("Interface unlocked")
+    end
 end
 
 function BuffCheck3:ResizeFrame(size)
@@ -202,7 +408,6 @@ function BuffCheck3:UpdateBagContents()
             end
         end
     end
-    BuffCheck3:tprint(BuffCheck3.BagContents)
 end
 
 -- updates the counts on the frame
@@ -256,11 +461,18 @@ function BuffCheck3:ButtonOnClick(consume)
 
 end
 
+function BuffCheck3:UpdateFrame()
+
+end
+
 --=================================================================
 -- Tooltip Stuff
 
-function BuffCheck3:ShowTooltip(consume, id)
-
+function BuffCheck3:ShowConsumeListTooltip(consume, name)
+    local _, link = GetItemInfo(consume)
+    GameTooltip:SetOwner(getglobal(name), "ANCHOR_BOTTOMRIGHT")
+    GameTooltip:SetHyperlink(link)
+    GameTooltip:Show()
 end
 
 function BuffCheck3:ShowWeaponTooltip(id)
@@ -302,6 +514,15 @@ function BuffCheck3:HasValue(tab, val)
         end
     end
     return false
+end
+
+function BuffCheck3:GetIndexInTable(tab, val)
+    for i, value in ipairs(tab) do
+        if value == val then
+            return i
+        end
+    end
+    return -1
 end
 
 -- debug only

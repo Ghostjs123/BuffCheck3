@@ -10,9 +10,7 @@
         <Scripts>
             <OnLoad>
                 self:RegisterForClicks("RightButtonDown")
-                if not self.lockedHighlight then
-                    getglobal(self:GetName().."Highlight"):Hide()
-                end
+                getglobal(self:GetName().."Highlight"):Hide()
                 GameTooltip:Hide()
             </OnLoad>
             <OnClick>
@@ -79,9 +77,7 @@
         </Size>
         <Scripts>
             <OnLoad>
-                    if not self.lockedHighlight then
-                        getglobal(self:GetName().."Highlight"):Hide()
-                    end
+                    getglobal(self:GetName().."Highlight"):Hide()
                     GameTooltip:Hide()
             </OnLoad>
             <OnClick>
@@ -151,10 +147,65 @@
         </Frames>
     </Frame>
 
-    <Frame name="BuffCheck3Frame" toplevel="true" movable="true" parent="UIParent" enableMouse="true" hidden="false" mixin="BuffCheck3">
+    <Button name="BuffCheck3ConsumeRowTemplate" virtual="true">
+        <Size>
+            <AbsDimension x="222" y="24"/>
+        </Size>
+        <Layers>
+            <Layer level="ARTWORK">
+                <Texture name="$parentIcon">
+                    <Size>
+                        <AbsDimension x="22" y="22"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="LEFT">
+                            <Offset>
+                                <AbsDimension x="0" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </Texture>
+                <FontString name="$parentName" font="GameFontHighlight" justifyH="LEFT">
+                    <Size>
+                        <AbsDimension x="200" y="22"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="LEFT" relativeTo="$parentIcon" relativePoint="RIGHT">
+                            <Offset>
+                                <AbsDimension x="4" y="0"/>
+                            </Offset>
+                        </Anchor>
+                        <Anchor point="RIGHT"/>
+                    </Anchors>
+                </FontString>
+            </Layer>
+            <Layer level="BACKGROUND">
+                <Texture name="$parentHighlight" file="Interface\QuestFrame\UI-QuestLogTitleHighlight" hidden="true" alphaMode="ADD">
+                    <Size>
+                        <AbsDimension x="200" y="24"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="TOPLEFT" relativeTo="$parentIcon"/>
+                    </Anchors>
+                </Texture>
+            </Layer>
+        </Layers>
+        <Scripts>
+            <OnEnter>
+                    getglobal(self:GetName().."Highlight"):Show()
+                    BuffCheck3:ShowConsumeListTooltip(self.consume, self:GetName())
+            </OnEnter>
+            <OnLeave>
+                    getglobal(self:GetName().."Highlight"):Hide()
+                    GameTooltip:Hide()
+            </OnLeave>
+        </Scripts>
+    </Button>
+
+    <Frame name="BuffCheck3ConsumeList" toplevel="true" movable="true" parent="UIParent" enableMouse="true" hidden="true" mixin="BuffCheck3">
         <TitleRegion setAllPoints="true"/>
         <Size>
-            <AbsDimension x="54" y="54" />
+            <AbsDimension x="480" y="60" />
         </Size>
         <Anchors>
             <Anchor point="CENTER" />
@@ -176,12 +227,109 @@
         </Backdrop>
         <Scripts>
             <OnLoad>
+                self:RegisterForDrag("LeftButton")
+			</OnLoad>
+            <OnDragStart>
+                self:StartMoving()
+            </OnDragStart>
+            <OnDragStop>
+                self:StopMovingOrSizing()
+            </OnDragStop>
+        </Scripts>
+        <Layers>
+            <Layer level="ARTWORK">
+                <FontString name="$parentAvailableText" font="GameFontHighlight" justifyH="LEFT" text="Available:">
+                    <Size x="100" y="22" />
+                    <Anchors>
+                        <Anchor point="TOPLEFT" relativeTo="BuffCheck3ConsumeList">
+                            <Offset>
+                                <AbsDimension x="16" y="-15"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+                <FontString name="$parentNoAvailableText" font="GameFontHighlight" justifyH="LEFT" text="No more consumes to add">
+                    <Size x="200" y="42" />
+                    <Anchors>
+                        <Anchor point="TOPLEFT" relativeTo="$parentAvailableText">
+                            <Offset>
+                                <AbsDimension x="0" y="-15"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+                <FontString name="$parentAddedText" font="GameFontHighlight" justifyH="LEFT" text="Added:">
+                    <Size x="100" y="22" />
+                    <Anchors>
+                        <Anchor point="TOP" relativeTo="BuffCheck3ConsumeList">
+                            <Offset>
+                                <AbsDimension x="46" y="-15"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+                <FontString name="$parentNoAddedText" font="GameFontHighlight" justifyH="LEFT" text="Click a consume to add it to the frame">
+                    <Size x="200" y="42" />
+                    <Anchors>
+                        <Anchor point="TOPLEFT" relativeTo="$parentAddedText">
+                            <Offset>
+                                <AbsDimension x="0" y="-15"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+            </Layer>
+        </Layers>
+        <Frames>
+            <Button name="BuffCheck3Close" inherits="GameMenuButtonTemplate" text="X">
+                <Size>
+                    <AbsDimension x="30" y="30"/>
+                </Size>
+                <Anchors>
+                    <Anchor point="TOPRIGHT" relativeTo="$parent">
+                        <Offset>
+                            <AbsDimension x="-15" y="-15" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                            BuffCheck3:HideConsumeList()
+                    </OnClick>
+                </Scripts>
+            </Button>
+        </Frames>
+    </Frame>
+
+    <Frame name="BuffCheck3Frame" toplevel="true" movable="true" parent="UIParent" enableMouse="true" hidden="false" mixin="BuffCheck3">
+        <TitleRegion setAllPoints="true"/>
+        <Size>
+            <AbsDimension x="54" y="54" />
+        </Size>
+        <Anchors>
+            <Anchor point="CENTER" />
+        </Anchors>
+        <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border"
+                  tile="true">
+            <BackgroundInsets>
+                <AbsInset left="11" right="12" top="12" bottom="11" />
+                <Size>
+                    <AbsDimension x="54" y="54" />
+                </Size>
+            </BackgroundInsets>
+            <EdgeSize>
+                <AbsValue val="32" />
+            </EdgeSize>
+        </Backdrop>
+        <Scripts>
+            <OnLoad>
 				BuffCheck3:OnLoad(self)
                 self:RegisterForDrag("LeftButton")
 			</OnLoad>
             <OnEvent method="OnEvent" />
             <OnDragStart>
-                if BuffCheck3_Config["locked"] ~= false then
+                <!-- DEFAULT_CHAT_FRAME:AddMessage("made it here") -->
+                if not BuffCheck3_Config["locked"] then
                     self:StartMoving()
                 end
             </OnDragStart>
