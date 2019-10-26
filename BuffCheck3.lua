@@ -9,8 +9,17 @@ BuffCheck3_Config = {}
 BuffCheck3.BagContents = {}
 
 BuffCheck3_TimeSinceLastUpdate = 0
+BuffCheck3.WasInCombat = false
+
 BuffCheck3_PrintFormat = "|c00f7f26c%s|r"
 
+-- ConsumeFrame
+BuffCheck3.AllActive = nil
+BuffCheck3.AllConsumeButtons = {}
+BuffCheck3.ActiveConsumes = {}
+BuffCheck3.InactiveConsumes = {}
+
+-- ConsumeList
 BuffCheck3.AvailableButtons = {}
 BuffCheck3.AddedButtons = {}
 
@@ -115,20 +124,8 @@ function BuffCheck3:Init()
         BuffCheck3:ResizeFrame(BuffCheck3_DefaultFrameSize) -- default
     end
 
-    -- make a cooldown frame for each button
-    -- local button
-    -- for i = 1, bc2_button_count do
-    --     button = getglobal("BuffCheck2Button"..i)
-    --     local myCooldown = CreateFrame("Model", nil, button, "CooldownFrameTemplate")
-
-    --     button.cooldown = function(start, duration)
-    --         CooldownFrame_SetTimer(myCooldown, start, duration, 1)
-    --     end
-    -- end
-
     BuffCheck3:UpdateBagContents()
     BuffCheck3:UpdateFrame()
-    BuffCheck3:UpdateItemCounts()
 
     -- set the OnUpdate event
     BuffCheck3Frame:SetScript("OnUpdate", BuffCheck3_OnUpdate)
@@ -150,9 +147,29 @@ end
 
 function BuffCheck3_OnUpdate(self, elapsed)
     BuffCheck3_TimeSinceLastUpdate = BuffCheck3_TimeSinceLastUpdate + elapsed
-    if BuffCheck3_TimeSinceLastUpdate > 1 then
+    if BuffCheck3_TimeSinceLastUpdate > 0.5 then
         BuffCheck3_TimeSinceLastUpdate = 0
 
+        local incombat = UnitAffectingCombat("player")
+
+        if incombat then
+            -- make all the buttons opaque
+            BuffCheck3.WasInCombat = true
+            for _, f in pairs(BuffCheck3.InactiveConsumes) do
+                f:SetAlpha(0.4)
+            end
+        else
+            -- add/remove buttons as buffs update
+            BuffCheck3:UpdateFrame()
+        end
+
+        -- fix all the opaque buttons
+        if not incombat and BuffCheck3.WasInCombat then
+            BuffCheck3.WasInCombat = false
+            for _, f in pairs(BuffCheck3.AllConsumeButtons) do
+                f:SetAlpha(1)
+            end
+        end
     end
 end
 
@@ -172,6 +189,8 @@ function BuffCheck3_MoveToAvailable(self)
         table.remove(BuffCheck3.AddedButtons, index)
     end
     BuffCheck3:ShowConsumeButtons()
+    -- update the frame
+    BuffCheck3:UpdateFrame()
 end
 
 function BuffCheck3_MoveToAdded(self)
@@ -182,19 +201,21 @@ function BuffCheck3_MoveToAdded(self)
         table.remove(BuffCheck3.AvailableButtons, index)
     end
     BuffCheck3:ShowConsumeButtons()
+    -- update the frame
+    BuffCheck3:UpdateFrame()
 end
 
 function BuffCheck3:ShowConsumeList()
-    BuffCheck3ConsumeList:Show()
     BuffCheck3:UpdateBagContents()
     BuffCheck3:UpdateConsumeList()
+    BuffCheck3ConsumeList:Show()
 end
 
 function BuffCheck3:HideConsumeList()
     BuffCheck3ConsumeList:Hide()
 end
 
-function BuffCheck3:ButtonExists(consume)
+function BuffCheck3:ConsumeListButtonExists(consume)
     for _, f in pairs(BuffCheck3.AvailableButtons) do
         if f.consume == consume then
             return true
@@ -208,37 +229,42 @@ function BuffCheck3:ButtonExists(consume)
     return false
 end
 
-function BuffCheck3:UpdateConsumeList()
+function BuffCheck3:CreateConsumeListButton(consume)
     local parent = getglobal("BuffCheck3ConsumeList")
+    local fname = "BuffCheck3ConsumeButton" .. (table.getn(BuffCheck3.AvailableButtons)
+        + table.getn(BuffCheck3.AddedButtons))
 
+     -- more info on the item
+     local name, _, quality, _, _, _, _, _, _, texture = GetItemInfo(consume)
+
+    -- create the button
+    f = CreateFrame("Button", fname, parent, "BuffCheck3ConsumeRowTemplate")
+    f.consume = consume
+
+    -- set text
+    local ftext = getglobal(fname.."Name")
+    ftext:SetText(name)
+    local r,g,b = GetItemQualityColor(quality)
+    ftext:SetTextColor(r,g,b)
+
+    -- set icon
+    local icon = getglobal(fname.."Icon")
+    icon:SetTexture(texture)
+    icon:SetVertexColor(1,1,1)
+
+    return f
+end
+
+-- main purpose is to create buttons and add em to the correct list
+function BuffCheck3:UpdateConsumeList()
     -- create a button for each consume
     for consume, _ in pairs(BuffCheck3.BagContents) do
         -- check if the consume already has a button
-        if not BuffCheck3:ButtonExists(consume) then
-            -- decide if available or added
-            local isadded = BuffCheck3:HasValue(BuffCheck3_SavedConsumes, consume)
-            local fname = "BuffCheck3ConsumeButton" .. (table.getn(BuffCheck3.AvailableButtons)
-                + table.getn(BuffCheck3.AddedButtons))
-
-            -- more info on the item
-            local name, _, quality, _, _, _, _, _, _, texture = GetItemInfo(consume)
+        if not BuffCheck3:ConsumeListButtonExists(consume) then
             
-            -- create the button
-            f = CreateFrame("Button", fname, parent, "BuffCheck3ConsumeRowTemplate")
-
-            -- set text
-            local ftext = getglobal(fname.."Name")
-            ftext:SetText(name)
-            local r,g,b = GetItemQualityColor(quality)
-            ftext:SetTextColor(r,g,b)
-            f.consume = consume
-
-            -- set icon
-            local icon = getglobal(fname.."Icon")
-            icon:SetTexture(texture)
-            icon:SetVertexColor(1,1,1)
-
+            f = BuffCheck3:CreateConsumeListButton(consume)
             -- add to appropriate list
+            local isadded = BuffCheck3:HasValue(BuffCheck3_SavedConsumes, consume)
             if not isadded then
                 table.insert(BuffCheck3.AvailableButtons, f)
             else
@@ -320,7 +346,7 @@ function BuffCheck3:PrintAllConsumes()
 end
 
 --=================================================================
--- Consume Frame Functions
+-- Command Functions
 
 function BuffCheck3:ShowFrame(shouldprint)
     BuffCheck3_Config["showing"] = true
@@ -341,8 +367,6 @@ end
 function BuffCheck3:LockFrame(shouldprint)
     BuffCheck3_Config["locked"] = true
     BuffCheck3Frame:EnableMouse(false)
-    -- local backdrop = BuffCheck3Frame:GetBackdrop()
-    -- BuffCheck3:tprint(backdrop)
     BuffCheck3Frame:SetBackdrop(BuffCheck3.LockedBackdrop)
     if shouldprint ~= false then
         BuffCheck3:SendMessage("Interface locked")
@@ -366,20 +390,8 @@ function BuffCheck3:ResizeFrame(size)
     BuffCheck3Frame:SetPoint("CENTER", "UIParent") -- inelegant solution, but w/e
 end
 
-function BuffCheck3:UpdateConsumeFrame()
-
-end
-
 --=================================================================
 -- Main Addon Functions
-
-function BuffCheck3:AddConsume(link)
-
-end
-
-function BuffCheck3:RemoveConsume(link)
-
-end
 
 function BuffCheck3:CheckGroupUpdate()
     if UnitInRaid("player") and not BuffCheck3:IsVisible() then
@@ -387,40 +399,52 @@ function BuffCheck3:CheckGroupUpdate()
     end
 end
 
+function BuffCheck3:GetBagCount(consume)
+    for con, count in pairs(BuffCheck3.BagContents) do
+        if con == consume then
+            return tostring(count)
+        end
+    end
+    return "0"
+end
+
 function BuffCheck3:UpdateBagContents()
+    BuffCheck3.BagContents = {}
     local link
     local itemType
-    local itemCount
+    local count
     for i = 0, 4 do
-        for j = 0, GetContainerNumSlots(i) do
-            local isC = IsConsumableItem(link)
-            link = GetContainerItemLink(i, j)
-            if link then -- nil if slot is empty
-                local _, _, _, _, _, itemType = GetItemInfo(link)
+        for j = 1, GetContainerNumSlots(i) do
+            _, count, _, _, _, _, link = GetContainerItemInfo(i, j)
+            if link then
+                _, _, _, _, _, itemType = GetItemInfo(link)
                 if itemType == "Consumable" then
-                    _, itemCount, _, _, _ = GetContainerItemInfo(i, j)
                     if BuffCheck3.BagContents[link] then
-                        BuffCheck3.BagContents[link] = BuffCheck3.BagContents[link] + itemCount
+                        BuffCheck3.BagContents[link] = BuffCheck3.BagContents[link] + count
                     else
-                        BuffCheck3.BagContents[link] = itemCount
+                        BuffCheck3.BagContents[link] = count
                     end
                 end
             end
         end
     end
+    -- also toss in saved consumes
+    for _, consume in pairs(BuffCheck3_SavedConsumes) do
+        if not BuffCheck3.BagContents[consume] then
+            BuffCheck3.BagContents[consume] = 0
+        end
+    end
 end
 
--- updates the counts on the frame
-function BuffCheck3:UpdateItemCounts()
-
-end
-
-function BuffCheck3:IsBuffPresent(consumename)
-    local buffname, spellid = GetItemSpell(consumename)
+function BuffCheck3:IsBuffPresent(consume)
+    local buffname, spellid = GetItemSpell(consume)
+    if buffname == nil then
+        return
+    end
     local name
     local words = {}
     for word in buffname:gmatch("%w+") do table.insert(words, word) end
-    -- checking a weapon buff
+    -- checking weapon buff
     if words[1] == "Sharpen" or words[1] == "Enhance" then
         local hasMainHandEnchant, _, _, hasOffHandEnchant, _, _, _, _, _ = GetWeaponEnchantInfo()
         local mainHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
@@ -438,7 +462,7 @@ function BuffCheck3:IsBuffPresent(consumename)
         -- mainhand and offhand are enchanted in regards to faction and class
         return true
     end
-    -- checking a consume buff
+    -- checking consume buff
     for x = 1, 32 do
         local name = UnitBuff("player", x)
         if name == buffname then
@@ -456,19 +480,139 @@ function BuffCheck3:ItemIsEnchantable(itemlink)
     return string.sub(sType, 0, 1) == "O" or string.sub(sType, 0, 1) == "D" or string.sub(sType, 0, 1) == "T"
 end
 
--- uses the consume
-function BuffCheck3:ButtonOnClick(consume)
+--=================================================================
+-- Consume Frame Functions
 
+-- updates the counts on the frame
+function BuffCheck3:UpdateItemCounts()
+    for _, f in pairs(BuffCheck3.AllConsumeButtons) do
+        local fcount = getglobal(f:GetName().."Count")
+        local count = BuffCheck3:GetBagCount(f.consume)
+        if fcount:GetText() ~= tostring(count) then
+            fcount:SetText(count)
+            if string.len(count) == 2 then
+                fcount:ClearAllPoints()
+                fcount:SetPoint("LEFT", f, "RIGHT", -16, -10)
+            else
+                fcount:ClearAllPoints()
+                fcount:SetPoint("LEFT", f, "RIGHT", -10, -10)
+            end
+        end
+    end
 end
 
+function BuffCheck3:ConsumeFrameButtonExists(consume)
+    for _, f in pairs(BuffCheck3.AllConsumeButtons) do
+        if f.consume == consume then
+            return true
+        end
+    end
+    return false
+end
+
+function BuffCheck3:CreateConsumeFrameButton(consume)
+    local parent = getglobal("BuffCheck3Frame")
+    local fname = "BuffCheck3FrameButton" .. table.getn(BuffCheck3.AllConsumeButtons)
+
+    -- more info on the item
+    local _, _, _, _, _, _, _, _, _, texture = GetItemInfo(consume)
+    f = CreateFrame("Button", fname, parent, "BuffCheck3ButtonTemplate")
+    f.consume = consume
+
+    -- set icon
+    local icon = getglobal(fname.."Icon")
+    icon:SetTexture(texture)
+    icon:SetVertexColor(1,1,1)
+
+    --create cooldown frame
+    local myCooldown = CreateFrame("Model", nil, f, "CooldownFrameTemplate")
+
+    f.cooldown = function(start, duration)
+        CooldownFrame_SetTimer(myCooldown, start, duration, 1)
+    end
+
+    -- set the onclick attribute for SecureActionButton
+    f:SetAttribute("item", consume)
+
+    return f
+end
+
+-- manages the Active and Inactive List
 function BuffCheck3:UpdateFrame()
 
+    -- create a button for each consume if it doesnt already exist
+    for _, consume in pairs(BuffCheck3_SavedConsumes) do
+        if not BuffCheck3:ConsumeFrameButtonExists(consume) then
+            -- create the button and add it to the list
+            table.insert(BuffCheck3.AllConsumeButtons,
+                BuffCheck3:CreateConsumeFrameButton(consume))
+        end
+    end
+    -- sort the buttons into Active and Inactive
+    BuffCheck3:SortConsumeFrameButtons()
+    -- add counts to the buttons
+    BuffCheck3:UpdateItemCounts()
+
+    BuffCheck3:ShowInactiveConsumes()
+end
+
+function BuffCheck3:SortConsumeFrameButtons()
+    BuffCheck3.ActiveConsumes = {}
+    BuffCheck3.InactiveConsumes = {}
+    for _, f in pairs(BuffCheck3.AllConsumeButtons) do
+        -- only add consumes that are in SavedConsumes
+        if BuffCheck3:HasValue(BuffCheck3_SavedConsumes, f.consume) then
+            local isactive = BuffCheck3:IsBuffPresent(f.consume)
+            if isactive then
+                table.insert(BuffCheck3.ActiveConsumes, f)
+            else
+                table.insert(BuffCheck3.InactiveConsumes, f)
+            end
+        end
+    end
+end
+
+function BuffCheck3:HideActiveButtons()
+    for _, f in pairs(BuffCheck3.ActiveConsumes) do
+        f:Hide()
+    end
+end
+
+function BuffCheck3:ShowInactiveConsumes()
+    local parent = getglobal("BuffCheck3Frame")
+    local numInactive = table.getn(BuffCheck3.InactiveConsumes)
+
+    -- update width
+    BuffCheck3Frame:SetWidth(52 + 36*(numInactive -1))
+
+    BuffCheck3:HideActiveButtons()
+    for i, f in ipairs(BuffCheck3.InactiveConsumes) do
+        f:ClearAllPoints()
+        f:SetPoint("TOPLEFT", parent, "TOPLEFT", 11 + 36*(i-1), -11)
+        f:Show()
+    end
+
+    -- if either lists are empty add a msg
+    if numInactive == 0 then
+        BuffCheck3:ShowAllActive()
+    end
+end
+
+function BuffCheck3:ShowAllActive()
+    BuffCheck3.AllActive = true
 end
 
 --=================================================================
 -- Tooltip Stuff
 
 function BuffCheck3:ShowConsumeListTooltip(consume, name)
+    local _, link = GetItemInfo(consume)
+    GameTooltip:SetOwner(getglobal(name), "ANCHOR_BOTTOMRIGHT")
+    GameTooltip:SetHyperlink(link)
+    GameTooltip:Show()
+end
+
+function BuffCheck3:ShowConsumeFrameTooltip(consume, name)
     local _, link = GetItemInfo(consume)
     GameTooltip:SetOwner(getglobal(name), "ANCHOR_BOTTOMRIGHT")
     GameTooltip:SetHyperlink(link)
@@ -507,6 +651,12 @@ function BuffCheck3:SendMessage(msg)
     DEFAULT_CHAT_FRAME:AddMessage(string.format(BuffCheck3_PrintFormat, "BuffCheck3: ") .. msg)
 end
 
+-- used for debug
+function BuffCheck3:GetRawName(consume)
+    -- matches text inside square brackets ex: [...] -> ...
+    return string.match(consume, "%[(.+)%]")
+end
+
 function BuffCheck3:HasValue(tab, val)
     for _, value in pairs(tab) do
         if value == val then
@@ -538,5 +688,11 @@ function BuffCheck3:tprint(tbl, indent)
         else
             DEFAULT_CHAT_FRAME:AddMessage(formatting .. v)
         end
+    end
+end
+
+function BuffCheck3:Test()
+    for _, f in pairs(BuffCheck3.InactiveConsumes) do
+        f.cooldown(0, 10)
     end
 end
