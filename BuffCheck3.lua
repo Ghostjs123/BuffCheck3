@@ -10,6 +10,7 @@ BuffCheck3.BagContents = {}
 
 BuffCheck3_TimeSinceLastUpdate = 0
 BuffCheck3.WasInCombat = false
+BuffCheck3.WasSpellTargeting = false
 
 BuffCheck3_PrintFormat = "|c00f7f26c%s|r"
 
@@ -169,6 +170,15 @@ function BuffCheck3_OnUpdate(self, elapsed)
             for _, f in pairs(BuffCheck3.AllConsumeButtons) do
                 f:SetAlpha(1)
             end
+        end
+
+        -- WeaponFrame stuff - hide em if no longer trying to apply enchant
+        if BuffCheck3.WasSpellTargeting and not SpellIsTargeting() then
+            BuffCheck3.WasSpellTargeting = false
+            BuffCheck3WeaponFrame:Hide()
+        end
+        if not BuffCheck3.WasSpellTargeting and SpellIsTargeting() then
+            BuffCheck3.WasSpellTargeting = true
         end
     end
 end
@@ -413,12 +423,14 @@ function BuffCheck3:UpdateBagContents()
     local link
     local itemType
     local count
+    local name
     for i = 0, 4 do
         for j = 1, GetContainerNumSlots(i) do
             _, count, _, _, _, _, link = GetContainerItemInfo(i, j)
             if link then
+                name = GetItemInfo(link)
                 _, _, _, _, _, itemType = GetItemInfo(link)
-                if itemType == "Consumable" then
+                if itemType == "Consumable" or string.match(name, "Sharpening") or string.match(name, "Weightstone") then
                     if BuffCheck3.BagContents[link] then
                         BuffCheck3.BagContents[link] = BuffCheck3.BagContents[link] + count
                     else
@@ -436,16 +448,21 @@ function BuffCheck3:UpdateBagContents()
     end
 end
 
+function BuffCheck3:IsWeaponBuff(consume)
+    local buffname, spellid = GetItemSpell(consume)
+    local words = {}
+    for word in buffname:gmatch("%w+") do table.insert(words, word) end
+    return words[1] == "Sharpen" or words[1] == "Enhance"
+end
+
 function BuffCheck3:IsBuffPresent(consume)
     local buffname, spellid = GetItemSpell(consume)
     if buffname == nil then
         return
     end
     local name
-    local words = {}
-    for word in buffname:gmatch("%w+") do table.insert(words, word) end
     -- checking weapon buff
-    if words[1] == "Sharpen" or words[1] == "Enhance" then
+    if BuffCheck3:IsWeaponBuff(consume) then
         local hasMainHandEnchant, _, _, hasOffHandEnchant, _, _, _, _, _ = GetWeaponEnchantInfo()
         local mainHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
         local offHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("SecondaryHandSlot"))
@@ -477,7 +494,7 @@ function BuffCheck3:ItemIsEnchantable(itemlink)
     -- name, link, quality, iLevel, reqLevel, class, subclass
     local _, _, _, _, _, _, sType = GetItemInfo(itemlink)
     if sType == nil then return false end
-    return string.sub(sType, 0, 1) == "O" or string.sub(sType, 0, 1) == "D" or string.sub(sType, 0, 1) == "T"
+    return string.sub(sType, 0, 1) == "O" or string.sub(sType, 0, 1) == "D" or string.sub(sType, 0, 1) == "T" or string.sub(sType, 0, 1) == "F"
 end
 
 --=================================================================
@@ -630,17 +647,37 @@ end
 --=================================================================
 -- WeaponButton Stuff
 
-function BuffCheck3:ShowWeaponButtons()
+function BuffCheck3:ShowWeaponButtons(f)
+    BuffCheck3WeaponFrame:ClearAllPoints()
+    BuffCheck3WeaponFrame:SetPoint("TOPLEFT", f, "TOPLEFT", 0, -36)
 
-end
+    -- mainhand
+    local mainHandTexture = GetInventoryItemTexture("player", GetInventorySlotInfo("MainHandSlot"))
+    if mainHandTexture then
+        BuffCheck3WeaponButton1Icon:SetTexture(mainHandTexture)
+        BuffCheck3WeaponButton1:Show()
+        
+        -- set the onclick attribute for SecureActionButton
+        local link = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
+        BuffCheck3WeaponButton1:SetAttribute("item", BuffCheck3:GetRawName(link))
+    else
+        BuffCheck3WeaponButton1:Hide()
+    end
 
-function BuffCheck3:HideWeaponButtons()
+    -- offhand
+    local offHandTexture = GetInventoryItemTexture("player", GetInventorySlotInfo("SecondaryHandSlot"))
+    if offHandTexture then
+        BuffCheck3WeaponButton2Icon:SetTexture(offHandTexture)
+        BuffCheck3WeaponButton2:Show()
+        
+        -- set the onclick attribute for SecureActionButton
+        local link = GetInventoryItemLink("player", GetInventorySlotInfo("SecondaryHandSlot"))
+        BuffCheck3WeaponButton2:SetAttribute("item", BuffCheck3:GetRawName(link))
+    else
+        BuffCheck3WeaponButton2:Hide()
+    end
 
-end
-
--- use cursor item on weapon
-function BuffCheck3:WeaponButtonOnClick(id)
-
+    BuffCheck3WeaponFrame:Show()
 end
 
 --=================================================================

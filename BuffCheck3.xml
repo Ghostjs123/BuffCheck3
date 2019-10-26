@@ -16,6 +16,7 @@
                 getglobal(self:GetName().."Highlight"):Hide()
                 GameTooltip:Hide()
             </OnLoad>
+            <!-- Not allowed to overwrite SecureActionButtonTemplate's OnClick -->
             <!-- <OnClick>
                 BuffCheck3:ButtonOnClick(self.consume)
             </OnClick> -->
@@ -23,13 +24,16 @@
                 getglobal(self:GetName().."Highlight"):Show()
                 if self.texture ~= "Interface\\Icons\\Spell_Nature_WispSplode" then
                     BuffCheck3:ShowConsumeFrameTooltip(self.consume, self:GetName())
+                    if BuffCheck3:IsWeaponBuff(self.consume) then
+                        BuffCheck3:ShowWeaponButtons(self)
+                    end
                 end
             </OnEnter>
             <OnLeave>
                 getglobal(self:GetName().."Highlight"):Hide()
                 GameTooltip:Hide()
                 if not SpellIsTargeting() then
-                    BuffCheck3:HideWeaponButtons()
+                    BuffCheck3WeaponFrame:Hide()
                 end
             </OnLeave>
         </Scripts>
@@ -74,18 +78,17 @@
         </Layers>
     </Button>
 
-    <Button name="BuffCheck3WeaponButtonTemplate" virtual="true" hidden="true" enableMouse="true" toplevel="true">
+    <Button name="BuffCheck3WeaponButtonTemplate" virtual="true" enableMouse="true" toplevel="true" inherits="SecureActionButtonTemplate">
         <Size>
             <AbsDimension x="32" y="32"/>
         </Size>
+        <Attributes>
+            <Attribute name="type" value="item" />
+        </Attributes>
         <Scripts>
             <OnLoad>
                     getglobal(self:GetName().."Highlight"):Hide()
-                    GameTooltip:Hide()
             </OnLoad>
-            <OnClick>
-                    BuffCheck3:WeaponButtonOnClick(self:GetID())
-            </OnClick>
             <OnEnter>
                     getglobal(self:GetName().."Highlight"):Show()
                     BuffCheck3:ShowWeaponTooltip(self:GetID())
@@ -94,7 +97,7 @@
                     getglobal(self:GetName().."Highlight"):Hide()
                     GameTooltip:Hide()
                     if not SpellIsTargeting() then
-                        BuffCheck3:HideWeaponButtons()
+                        BuffCheck3WeaponFrame:Hide()
                     end
             </OnLeave>
         </Scripts>
