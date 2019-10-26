@@ -91,7 +91,7 @@
             </OnLoad>
             <OnEnter>
                     getglobal(self:GetName().."Highlight"):Show()
-                    BuffCheck3:ShowWeaponTooltip(self:GetID())
+                    BuffCheck3:ShowWeaponTooltip(self:GetName())
             </OnEnter>
             <OnLeave>
                     getglobal(self:GetName().."Highlight"):Hide()

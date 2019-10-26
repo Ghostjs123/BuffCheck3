@@ -636,12 +636,17 @@ function BuffCheck3:ShowConsumeFrameTooltip(consume, name)
     GameTooltip:Show()
 end
 
-function BuffCheck3:ShowWeaponTooltip(id)
-
-end
-
-function BuffCheck3:HideWeaponTooltip(id)
-
+function BuffCheck3:ShowWeaponTooltip(fname)
+    local id = string.sub(fname, -1)
+    if id == "1" then
+        GameTooltip:SetOwner(getglobal("BuffCheck3WeaponButton"..id), "ANCHOR_BOTTOMRIGHT")
+        GameTooltip:SetInventoryItem("player", GetInventorySlotInfo("MainHandSlot"))
+        GameTooltip:Show()
+    elseif id == "2" then
+        GameTooltip:SetOwner(getglobal("BuffCheck3WeaponButton"..id), "ANCHOR_BOTTOMRIGHT")
+        GameTooltip:SetInventoryItem("player", GetInventorySlotInfo("SecondaryHandSlot"))
+        GameTooltip:Show()
+    end
 end
 
 --=================================================================
