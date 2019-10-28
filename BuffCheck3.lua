@@ -11,7 +11,7 @@ BuffCheck3.BagContents = {}
 BuffCheck3_TimeSinceLastUpdate = 0
 BuffCheck3.WasInCombat = false
 BuffCheck3.WasSpellTargeting = false
-BuffCheck3.WasHiddinInRaid = false
+BuffCheck3.AutoShowd = false
 
 BuffCheck3_PrintFormat = "|c00f7f26c%s|r"
 
@@ -143,7 +143,7 @@ function BuffCheck3:Init()
     BuffCheck3:UpdateFrame()
 
     -- set the OnUpdate event
-    BuffCheck3Frame:SetScript("OnUpdate", BuffCheck3_OnUpdate)
+    BuffCheck3UpdateFrame:SetScript("OnUpdate", BuffCheck3_OnUpdate)
 
     BuffCheck3:SendMessage("Init Successful")
 end
@@ -186,6 +186,9 @@ function BuffCheck3_OnUpdate(self, elapsed)
             end
         end
 
+        -- show in raids
+        BuffCheck3:CheckGroupUpdate()
+
         -- WeaponFrame stuff - hide em if no longer trying to apply enchant
         if BuffCheck3.WasSpellTargeting and not SpellIsTargeting() then
             BuffCheck3.WasSpellTargeting = false
@@ -201,8 +204,6 @@ function BuffCheck3_OnUpdate(self, elapsed)
             f.cooldown(start, duration)
         end
 
-        -- show in raids
-        BuffCheck3:CheckGroupUpdate()
     end
 end
 
@@ -246,9 +247,6 @@ end
 
 function BuffCheck3:HideConsumeList()
     BuffCheck3ConsumeList:Hide()
-    if UnitInRaid("player") then
-        BuffCheck3.WasHiddinInRaid = true
-    end
 end
 
 function BuffCheck3:ConsumeListButtonExists(consume)
@@ -390,9 +388,6 @@ function BuffCheck3:ShowFrame(shouldprint)
     if shouldprint ~= false then
         BuffCheck3:SendMessage("Interface showing")
     end
-    if BuffCheck3.WasHiddinInRaid and UnitInRaid("player") then
-        BuffCheck3.WasHiddinInRaid = false
-    end
 end
 
 function BuffCheck3:HideFrame(shouldprint)
@@ -439,8 +434,9 @@ end
 -- Main Addon Functions
 
 function BuffCheck3:CheckGroupUpdate()
-    if not BuffCheck3:IsShown() and UnitInRaid("player") and not BuffCheck3.WasHiddinInRaid then
-        BuffCheck3:ShowFrame()
+    if not BuffCheck3Frame:IsShown() and UnitInRaid("player") and not BuffCheck3.AutoShowd then
+        BuffCheck3Frame:Show()
+        BuffCheck3.AutoShowd = true
     end
 end
 

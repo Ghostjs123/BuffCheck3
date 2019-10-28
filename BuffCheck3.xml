@@ -343,4 +343,6 @@
             </OnDragStop>
         </Scripts> 
     </Frame>
+
+    <Frame name="BuffCheck3UpdateFrame"></Frame>
 </Ui>
