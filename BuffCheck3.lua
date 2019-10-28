@@ -53,6 +53,17 @@ BuffCheck3.UnlockedBackdrop = {
     }
 }
 
+BuffCheck3.FoodBuffList = {
+    "Well Fed",
+    "Increased Stamina",
+    "Increased Intellect",
+    "Increased Agility",
+    "Brain Food",
+    "Blessed Sunfruit",
+    "Blessed Sunfruit Juice",
+    "Mana Regeneration"
+}
+
 SLASH_BUFFCHECK1 = "/bc"
 SLASH_BUFFCHECK2 = "/buffcheck"
 function SlashCmdList.BUFFCHECK(args)
@@ -462,37 +473,58 @@ function BuffCheck3:UpdateBagContents()
     end
 end
 
-function BuffCheck3:IsWeaponBuff(consume)
-    local buffname, spellid = GetItemSpell(consume)
+function BuffCheck3:IsFoodBuffPresent()
+    for x = 1, 32 do
+        local name = UnitBuff("player", x)
+        if BuffCheck3:HasValue(BuffCheck3.FoodBuffList, name) then
+            return true
+        end
+    end
+    return false
+end
+
+function BuffCheck3:IsWeaponBuff(buffname)
     local words = {}
     for word in buffname:gmatch("%w+") do table.insert(words, word) end
     return words[1] == "Sharpen" or words[1] == "Enhance"
 end
 
+function BuffCheck3:IsWeaponBuffsPresent()
+    local hasMainHandEnchant, _, _, hasOffHandEnchant, _, _, _, _, _ = GetWeaponEnchantInfo()
+    local mainHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
+    local offHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("SecondaryHandSlot"))
+    local faction = UnitFactionGroup("player")
+    local class = UnitClass("player")
+    if (faction == "Horde" and class ~= "Warrior" and class ~= "Rogue") or faction == "Alliance" then
+        if BuffCheck3:ItemIsEnchantable(mainHandLink) and not hasMainHandEnchant then
+            return false
+        end
+    end
+    if BuffCheck3:ItemIsEnchantable(offHandLink) and not hasOffHandEnchant then
+        return false
+    end
+    -- mainhand and offhand are enchanted in regards to faction and class
+    return true
+end
+
 function BuffCheck3:IsBuffPresent(consume)
     local buffname, spellid = GetItemSpell(consume)
+
+    -- occasionally happens with weird consumes
     if buffname == nil then
         return
     end
-    local name
-    -- checking weapon buff
-    if BuffCheck3:IsWeaponBuff(consume) then
-        local hasMainHandEnchant, _, _, hasOffHandEnchant, _, _, _, _, _ = GetWeaponEnchantInfo()
-        local mainHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
-        local offHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("SecondaryHandSlot"))
-        local faction = UnitFactionGroup("player")
-        local class = UnitClass("player")
-        if (faction == "Horde" and class ~= "Warrior" and class ~= "Rogue") or faction == "Alliance" then
-            if BuffCheck3:ItemIsEnchantable(mainHandLink) and not hasMainHandEnchant then
-                return false
-            end
-        end
-        if BuffCheck3:ItemIsEnchantable(offHandLink) and not hasOffHandEnchant then
-            return false
-        end
-        -- mainhand and offhand are enchanted in regards to faction and class
-        return true
+    
+    -- checking food buffs
+    if buffname == "Food" then
+        return BuffCheck3:IsFoodBuffPresent()
     end
+
+    -- checking weapon buff
+    if BuffCheck3:IsWeaponBuff(buffname) then
+        return BuffCheck3:IsWeaponBuffsPresent()
+    end
+
     -- checking consume buff
     for x = 1, 32 do
         local name = UnitBuff("player", x)
