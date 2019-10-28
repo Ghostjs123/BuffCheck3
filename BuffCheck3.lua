@@ -483,7 +483,14 @@ function BuffCheck3:IsFoodBuffPresent()
     return false
 end
 
-function BuffCheck3:IsWeaponBuff(buffname)
+function BuffCheck3:IsWeaponBuff(consume)
+    local buffname, spellid = GetItemSpell(consume)
+    local words = {}
+    for word in buffname:gmatch("%w+") do table.insert(words, word) end
+    return words[1] == "Sharpen" or words[1] == "Enhance"
+end
+
+function BuffCheck3:IsWeaponBuffName(buffname)
     local words = {}
     for word in buffname:gmatch("%w+") do table.insert(words, word) end
     return words[1] == "Sharpen" or words[1] == "Enhance"
@@ -521,7 +528,7 @@ function BuffCheck3:IsBuffPresent(consume)
     end
 
     -- checking weapon buff
-    if BuffCheck3:IsWeaponBuff(buffname) then
+    if BuffCheck3:IsWeaponBuffName(buffname) then
         return BuffCheck3:IsWeaponBuffsPresent()
     end
 
