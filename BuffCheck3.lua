@@ -11,6 +11,7 @@ BuffCheck3.BagContents = {}
 BuffCheck3_TimeSinceLastUpdate = 0
 BuffCheck3.WasInCombat = false
 BuffCheck3.WasSpellTargeting = false
+BuffCheck3.WasHiddinInRaid = false
 
 BuffCheck3_PrintFormat = "|c00f7f26c%s|r"
 
@@ -199,6 +200,9 @@ function BuffCheck3_OnUpdate(self, elapsed)
             local start, duration = GetItemCooldown(BuffCheck3:LinkToID(f.consume))
             f.cooldown(start, duration)
         end
+
+        -- show in raids
+        BuffCheck3:CheckGroupUpdate()
     end
 end
 
@@ -242,6 +246,9 @@ end
 
 function BuffCheck3:HideConsumeList()
     BuffCheck3ConsumeList:Hide()
+    if UnitInRaid("player") then
+        BuffCheck3.WasHiddinInRaid = true
+    end
 end
 
 function BuffCheck3:ConsumeListButtonExists(consume)
@@ -383,6 +390,9 @@ function BuffCheck3:ShowFrame(shouldprint)
     if shouldprint ~= false then
         BuffCheck3:SendMessage("Interface showing")
     end
+    if BuffCheck3.WasHiddinInRaid and UnitInRaid("player") then
+        BuffCheck3.WasHiddinInRaid = false
+    end
 end
 
 function BuffCheck3:HideFrame(shouldprint)
@@ -429,7 +439,7 @@ end
 -- Main Addon Functions
 
 function BuffCheck3:CheckGroupUpdate()
-    if UnitInRaid("player") and not BuffCheck3:IsVisible() then
+    if not BuffCheck3:IsShown() and UnitInRaid("player") and not BuffCheck3.WasHiddinInRaid then
         BuffCheck3:ShowFrame()
     end
 end
