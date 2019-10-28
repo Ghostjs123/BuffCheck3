@@ -80,6 +80,8 @@ function SlashCmdList.BUFFCHECK(args)
         else
             BuffCheck3:SendMessage("Missing Size")
         end
+    elseif BuffCheck3:HasValue(words, "clear") then
+        BuffCheck3:Clear()
     else
         BuffCheck3:SendMessage("Options: update, show, hide, lock, unlock, resize")
     end
@@ -179,6 +181,12 @@ function BuffCheck3_OnUpdate(self, elapsed)
         end
         if not BuffCheck3.WasSpellTargeting and SpellIsTargeting() then
             BuffCheck3.WasSpellTargeting = true
+        end
+
+        -- check for item gcd
+        for _, f in pairs(BuffCheck3.InactiveConsumes) do
+            local start, duration = GetItemCooldown(BuffCheck3:LinkToID(f.consume))
+            f.cooldown(start, duration)
         end
     end
 end
@@ -400,6 +408,12 @@ function BuffCheck3:ResizeFrame(size)
     BuffCheck3Frame:SetPoint("CENTER", "UIParent") -- inelegant solution, but w/e
 end
 
+function BuffCheck3:Clear()
+    for k in pairs(BuffCheck3_SavedConsumes) do
+        BuffCheck3_SavedConsumes[k] = nil
+    end
+end
+
 --=================================================================
 -- Main Addon Functions
 
@@ -542,10 +556,11 @@ function BuffCheck3:CreateConsumeFrameButton(consume)
     icon:SetVertexColor(1,1,1)
 
     --create cooldown frame
-    local myCooldown = CreateFrame("Model", nil, f, "CooldownFrameTemplate")
+    local myCooldown = CreateFrame("Cooldown", f:GetName().."Cooldown", f, "CooldownFrameTemplate")
+    myCooldown:SetAllPoints()
 
     f.cooldown = function(start, duration)
-        CooldownFrame_SetTimer(myCooldown, start, duration, 1)
+        myCooldown:SetCooldown(start, duration)
     end
 
     -- set the onclick attribute for SecureActionButton
@@ -699,6 +714,10 @@ function BuffCheck3:GetRawName(consume)
     return string.match(consume, "%[(.+)%]")
 end
 
+function BuffCheck3:LinkToID(link)
+    return string.match(link, ":(%d+)")
+end
+
 function BuffCheck3:HasValue(tab, val)
     for _, value in pairs(tab) do
         if value == val then
@@ -735,6 +754,6 @@ end
 
 function BuffCheck3:Test()
     for _, f in pairs(BuffCheck3.InactiveConsumes) do
-        f.cooldown(0, 10)
+        f.cooldown(GetTime(), 10)
     end
 end
