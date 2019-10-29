@@ -663,12 +663,12 @@ function BuffCheck3:CheckExpirationTimes()
     -- mh could be enchanted while offhand is not, so need to manually check here
     local _, mainHandExpiration, _, _, _, offHandExpiration = GetWeaponEnchantInfo()
     if mainHandExpiration then
-        if offHandExpiration then
-            BuffCheck3:GiveWepExpirationWarning(mainHandExpiration / 1000, offHandExpiration / 1000)
-        else
-            BuffCheck3:GiveWepExpirationWarning(mainHandExpiration / 1000, nil)
-        end
+        mainHandExpiration = mainHandExpiration / 1000
     end
+    if offHandExpiration then
+        offHandExpiration = offHandExpiration / 1000
+    end
+    BuffCheck3:GiveWepExpirationWarning(mainHandExpiration, offHandExpiration)
 end
 
 function BuffCheck3:GiveFiveMinWarning(consume)
@@ -695,6 +695,7 @@ end
 
 function BuffCheck3:GiveWepExpirationWarning(exp1, exp2)
     if exp1 then
+        BuffCheck3.MHWasActive = true
         if exp1 < 120 then -- 2 mins
             BuffCheck3:GiveTwoMinWeaponWarning(f.consume, "mainhand")
         elseif exp1 < 300 then -- 5 mins
@@ -706,6 +707,7 @@ function BuffCheck3:GiveWepExpirationWarning(exp1, exp2)
         BuffCheck3:ClearExpirationTimer("mainhand")
     end
     if exp2 then
+        BuffCheck3.OHWasActive = true
         if exp2 < 120 then -- 2 mins
             BuffCheck3:GiveTwoMinWeaponWarning(f.consume, "offhand")
         elseif exp2 < 300 then -- 5 mins
