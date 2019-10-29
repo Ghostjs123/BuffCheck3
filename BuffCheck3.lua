@@ -738,9 +738,13 @@ function BuffCheck3:ClearExpirationTimer(consume)
     -- for weapon structure is ["two"/"five"] = {1: "mainhand", 2: "offhand"}
     -- for everything else ["two"/"five"] = {1: consume 2: consume ... }
     local index = BuffCheck3:GetIndexInTable(BuffCheck3_ExpirationWarnings["two"], consume)
-    table.remove(BuffCheck3_ExpirationWarnings["two"], index)
+    if index ~= -1 then
+        table.remove(BuffCheck3_ExpirationWarnings["two"], index)
+    end
     local index = BuffCheck3:GetIndexInTable(BuffCheck3_ExpirationWarnings["five"], consume)
-    table.remove(BuffCheck3_ExpirationWarnings["five"], index)
+    if index ~= -1 then
+        table.remove(BuffCheck3_ExpirationWarnings["five"], index)
+    end
 end
 
 --=================================================================
