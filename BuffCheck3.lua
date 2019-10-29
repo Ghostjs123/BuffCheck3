@@ -27,8 +27,6 @@ BuffCheck3_TimeSinceLastUpdate = 0
 BuffCheck3.OnUpdateCount = 0
 BuffCheck3.WasInCombat = false
 BuffCheck3.WasSpellTargeting = false
-BuffCheck3.AutoShowd = false
-BuffCheck3.AutoHid = false
 
 BuffCheck3_PrintFormat = "|c00f7f26c%s|r"
 
@@ -507,7 +505,7 @@ function BuffCheck3:UpdateBagContents()
             if link then
                 name = GetItemInfo(link)
                 _, _, _, _, _, itemType = GetItemInfo(link)
-                if name and (itemType == "Consumable" or string.match(name, "Sharpening") or string.match(name, "Weightstone")) then
+                if name and (itemType == "Consumable" or itemType == "Quest" or string.match(name, "Sharpening") or string.match(name, "Weightstone")) then
                     if BuffCheck3.BagContents[link] then
                         BuffCheck3.BagContents[link] = BuffCheck3.BagContents[link] + count
                     else
