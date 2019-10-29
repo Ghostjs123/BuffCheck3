@@ -568,10 +568,10 @@ function BuffCheck3:IsFoodBuffPresent()
     for x = 1, 32 do
         local name, _, _, _, _, expires = UnitBuff("player", x)
         if BuffCheck3:HasValue(BuffCheck3.FoodBuffList, name) then
-            return true, expires - GetTime(), nil
+            return true, expires - GetTime()
         end
     end
-    return false, 0, nil
+    return false, 0
 end
 
 function BuffCheck3:IsWeaponBuff(consume)
@@ -588,30 +588,23 @@ function BuffCheck3:IsWeaponBuffName(buffname)
 end
 
 function BuffCheck3:IsWeaponBuffsPresent()
-    local hasMainHandEnchant, mainHandExpiration, _, _, hasOffHandEnchant, offHandExpiration = GetWeaponEnchantInfo()
+    local hasMainHandEnchant, _, _, _, hasOffHandEnchant = GetWeaponEnchantInfo()
     local mainHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
     local offHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("SecondaryHandSlot"))
     local faction = UnitFactionGroup("player")
     local class = UnitClass("player")
     if (faction == "Horde" and class ~= "Warrior" and class ~= "Rogue") or faction == "Alliance" then
         if BuffCheck3:ItemIsEnchantable(mainHandLink) and not hasMainHandEnchant then
-            return false, 0, 0
+            return false
         end
     end
     if BuffCheck3:ItemIsEnchantable(offHandLink) and not hasOffHandEnchant then
-        return false, 0, 0
+        return false
     end
     -- mainhand and offhand are enchanted in regards to faction and class
-    if mainHandExpiration and offHandExpiration then
-        return true, mainHandExpiration - GetTime(), offHandExpiration - GetTime()
-    else
-        return true, nil, nil
-    end
+    return true
 end
 
--- NOTE: this function must return
---       true/false, expiration1, expiration2
--- if expiration2 ~= nil then weapon buff
 function BuffCheck3:IsBuffPresent(consume)
     local buffname, spellid = GetItemSpell(consume)
 
@@ -622,24 +615,22 @@ function BuffCheck3:IsBuffPresent(consume)
     
     -- checking food buffs
     if buffname == "Food" then
-        local isp, exp1, exp2 = BuffCheck3:IsFoodBuffPresent()
-        return isp, exp1, exp2
+        return BuffCheck3:IsFoodBuffPresent()
     end
 
     -- checking weapon buff
     if BuffCheck3:IsWeaponBuffName(buffname) then
-        local isp, exp1, exp2 = BuffCheck3:IsWeaponBuffsPresent()
-        return isp, exp1, exp2
+        return BuffCheck3:IsWeaponBuffsPresent()
     end
 
     -- checking consume buff
     for x = 1, 32 do
         local name, _, _, _, _, expires = UnitBuff("player", x)
         if name == buffname then
-            return true, expires - GetTime(), nil
+            return true, expires - GetTime()
         end
     end
-    return false, 0, nil
+    return false, 0
 end
 
 function BuffCheck3:ItemIsEnchantable(itemlink)
@@ -654,98 +645,102 @@ end
 
 function BuffCheck3:CheckExpirationTimes()
     for _, f in pairs(BuffCheck3.ActiveConsumes) do
-        local _, exp1, exp2 = BuffCheck3:IsBuffPresent(f.consume)
-        if exp1 then -- only nil if error'd
-            if exp2 == nil then
-                -- not a weapon buff
+        if not BuffCheck3:IsWeaponBuff(f.consume) then -- weapon buff IsBuffPresent doesnt return time
+            local _, exp1 = BuffCheck3:IsBuffPresent(f.consume)
+            if exp1 then -- only nil if error'd
                 if exp1 < 120 then -- 2 mins
                     BuffCheck3:GiveTwoMinWarning(f.consume)
                 elseif exp1 < 300 then -- 5 mins
                     BuffCheck3:GiveFiveMinWarning(f.consume)
                 end
-            else
-                -- is a weapon buff
-                if exp1 < 120 then -- 2 mins
-                    BuffCheck3:GiveTwoMinWarning(f.consume, "mainhand")
-                elseif exp1 < 300 then -- 5 mins
-                    BuffCheck3:GiveFiveMinWarning(f.consume, "mainhand")
-                end
-                if exp2 < 120 then -- 2 mins
-                    BuffCheck3:GiveTwoMinWarning(f.consume, "offhand")
-                elseif exp2 < 300 then -- 5 mins
-                    BuffCheck3:GiveFiveMinWarning(f.consume, "offhand")
-                end
             end
+        end
+    end
+    -- weapon enchants are special
+    -- mh could be enchanted while offhand is not, so need to manually check here
+    local _, mainHandExpiration, _, _, _, offHandExpiration = GetWeaponEnchantInfo()
+    if mainHandExpiration then
+        if offHandExpiration then
+            BuffCheck3:GiveWepExpirationWarning(mainHandExpiration / 1000, offHandExpiration / 1000)
+        else
+            BuffCheck3:GiveWepExpirationWarning(mainHandExpiration / 1000, nil)
         end
     end
 end
 
-function BuffCheck3:GiveFiveMinWarning(consume, wep)
-    if wep then
-        if not BuffCheck3_ExpirationWarnings["five"][consume] then
-            BuffCheck3_ExpirationWarnings["five"][consume] = {}
-        end
-        if not BuffCheck3:HasValue(BuffCheck3_ExpirationWarnings["five"][consume], wep) then
-            local link
-            if wep == "mainhand" then
-                link = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
-            else
-                link = GetInventoryItemLink("player", GetInventorySlotInfo("SecondaryHandSlot"))
-            end
-            BuffCheck3:SendExpirationMessage(consume, " has 5 minutes remaining", link)
-            table.insert(BuffCheck3_ExpirationWarnings["five"][consume], wep)
-        end
-    else
-        local buffname, spellid = GetItemSpell(consume)
-        if buffname == "Food" then
-            consume = "Food Buff"
-        end
-        if not BuffCheck3:HasValue(BuffCheck3_ExpirationWarnings["five"], consume) then
-            BuffCheck3:SendExpirationMessage(consume, " has 5 minutes remaining", nil)
-            table.insert(BuffCheck3_ExpirationWarnings["five"], consume)
-        end
+function BuffCheck3:GiveFiveMinWarning(consume)
+    local buffname, spellid = GetItemSpell(consume)
+    if buffname == "Food" then
+        consume = "Food Buff"
+    end
+    if not BuffCheck3:HasValue(BuffCheck3_ExpirationWarnings["five"], consume) then
+        BuffCheck3:SendExpirationMessage(consume, " has 5 minutes remaining", nil)
+        table.insert(BuffCheck3_ExpirationWarnings["five"], consume)
     end
 end
 
 function BuffCheck3:GiveTwoMinWarning(consume, wep)
-    if wep then
-        if not BuffCheck3_ExpirationWarnings["two"][consume] then
-            BuffCheck3_ExpirationWarnings["two"][consume] = {}
+    local buffname, spellid = GetItemSpell(consume)
+    if buffname == "Food" then
+        consume = "Food Buff"
+    end
+    if not BuffCheck3:HasValue(BuffCheck3_ExpirationWarnings["two"], consume) then
+        BuffCheck3:SendExpirationMessage(consume, " has 2 minutes remaining", nil)
+        table.insert(BuffCheck3_ExpirationWarnings["two"], consume)
+    end
+end
+
+function BuffCheck3:GiveWepExpirationWarning(exp1, exp2)
+    if exp1 then
+        if exp1 < 120 then -- 2 mins
+            BuffCheck3:GiveTwoMinWeaponWarning(f.consume, "mainhand")
+        elseif exp1 < 300 then -- 5 mins
+            BuffCheck3:GiveFiveMinWeaponWarning(f.consume, "mainhand")
         end
-        if not BuffCheck3:HasValue(BuffCheck3_ExpirationWarnings["two"][consume], wep) then
-            local link
-            if wep == "mainhand" then
-                link = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
-            else
-                link = GetInventoryItemLink("player", GetInventorySlotInfo("SecondaryHandSlot"))
-            end
-            BuffCheck3:SendExpirationMessage(consume, " has 2 minutes remaining", link)
-            table.insert(BuffCheck3_ExpirationWarnings["two"][consume], wep)
-        end
-    else
-        local buffname, spellid = GetItemSpell(consume)
-        if buffname == "Food" then
-            consume = "Food Buff"
-        end
-        if not BuffCheck3:HasValue(BuffCheck3_ExpirationWarnings["two"], consume) then
-            BuffCheck3:SendExpirationMessage(consume, " has 2 minutes remaining", nil)
-            table.insert(BuffCheck3_ExpirationWarnings["two"], consume)
+    end
+    if exp2 then
+        if exp2 < 120 then -- 2 mins
+            BuffCheck3:GiveTwoMinWeaponWarning(f.consume, "offhand")
+        elseif exp2 < 300 then -- 5 mins
+            BuffCheck3:GiveFiveMinWeaponWarning(f.consume, "offhand")
         end
     end
 end
 
-function BuffCheck3:ClearExpirationTimer(consume)
-    -- for weapon structure is ["two"/"five"][consume] = {1: "mainhand", 2: "offhand"}
-    -- for everything else ["two"/"five"] = {1: consume 2: consume ... }
-    if consume ~= "Food Buff" and BuffCheck3:IsWeaponBuff(consume) then
-        BuffCheck3_ExpirationWarnings["two"][consume] = {}
-        BuffCheck3_ExpirationWarnings["five"][consume] = {}
-    else
-        local index = BuffCheck3:GetIndexInTable(BuffCheck3_ExpirationWarnings["two"], consume)
-        table.remove(BuffCheck3_ExpirationWarnings["two"], index)
-        local index = BuffCheck3:GetIndexInTable(BuffCheck3_ExpirationWarnings["five"], consume)
-        table.remove(BuffCheck3_ExpirationWarnings["five"], index)
+function BuffCheck3:GiveFiveMinWeaponWarning(wep)
+    if not BuffCheck3:HasValue(BuffCheck3_ExpirationWarnings["five"], wep) then
+        local link
+        if wep == "mainhand" then
+            link = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
+        else
+            link = GetInventoryItemLink("player", GetInventorySlotInfo("SecondaryHandSlot"))
+        end
+        BuffCheck3:SendWeaponExpirationMessage("5 minutes remaining on ", link)
+        table.insert(BuffCheck3_ExpirationWarnings["five"], wep)
     end
+end
+
+function BuffCheck3:GiveTwoMinWeaponWarning(wep)
+    if not BuffCheck3:HasValue(BuffCheck3_ExpirationWarnings["two"], wep) then
+        local link
+        if wep == "mainhand" then
+            link = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
+        else
+            link = GetInventoryItemLink("player", GetInventorySlotInfo("SecondaryHandSlot"))
+        end
+        BuffCheck3:SendWeaponExpirationMessage("2 minutes remaining on ", link)
+        table.insert(BuffCheck3_ExpirationWarnings["two"], wep)
+    end
+end
+
+-- NOTE: consume includes "mainhand"/"offhand" here
+function BuffCheck3:ClearExpirationTimer(consume)
+    -- for weapon structure is ["two"/"five"] = {1: "mainhand", 2: "offhand"}
+    -- for everything else ["two"/"five"] = {1: consume 2: consume ... }
+    local index = BuffCheck3:GetIndexInTable(BuffCheck3_ExpirationWarnings["two"], consume)
+    table.remove(BuffCheck3_ExpirationWarnings["two"], index)
+    local index = BuffCheck3:GetIndexInTable(BuffCheck3_ExpirationWarnings["five"], consume)
+    table.remove(BuffCheck3_ExpirationWarnings["five"], index)
 end
 
 --=================================================================
@@ -961,7 +956,7 @@ end
 
 function BuffCheck3:ShowWeaponButtons(f)
     BuffCheck3WeaponFrame:ClearAllPoints()
-    BuffCheck3WeaponFrame:SetPoint("TOPLEFT", f, "TOPLEFT", 0, -36)
+    BuffCheck3WeaponFrame:SetPoint("TOPLEFT", f, "TOPLEFT", -36, -36)
 
     -- mainhand
     local mainHandTexture = GetInventoryItemTexture("player", GetInventorySlotInfo("MainHandSlot"))
@@ -1000,13 +995,14 @@ function BuffCheck3:SendMessage(msg)
     DEFAULT_CHAT_FRAME:AddMessage(string.format(BuffCheck3_PrintFormat, "BuffCheck3: ") .. msg)
 end
 
-function BuffCheck3:SendExpirationMessage(consume, msg, wep)
+function BuffCheck3:SendWeaponExpirationMessage(msg, wep)
     local msg = string.format(BuffCheck3_PrintFormat, msg)
-    if wep == nil then
-        DEFAULT_CHAT_FRAME:AddMessage(string.format(BuffCheck3_PrintFormat, "BuffCheck3: ") .. consume .. msg)
-    else
-        DEFAULT_CHAT_FRAME:AddMessage(string.format(BuffCheck3_PrintFormat, "BuffCheck3: ") .. consume .. msg .. wep)
-    end
+    DEFAULT_CHAT_FRAME:AddMessage(string.format(BuffCheck3_PrintFormat, "BuffCheck3: ") .. msg .. wep)
+end
+
+function BuffCheck3:SendExpirationMessage(consume, msg)
+    local msg = string.format(BuffCheck3_PrintFormat, msg)
+    DEFAULT_CHAT_FRAME:AddMessage(string.format(BuffCheck3_PrintFormat, "BuffCheck3: ") .. consume .. msg)
 end
 
 -- used for debug
