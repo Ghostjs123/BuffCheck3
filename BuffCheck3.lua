@@ -389,11 +389,18 @@ function BuffCheck3:ShowFrame(shouldshow)
     if not shouldshow then
         -- Hide first so Show is the default
         BuffCheck3Frame:Hide()
+        BuffCheck3UpdateFrameBuffString:Hide()
+        BuffCheck3UpdateFrameBuffCount:Hide()
+        if shouldprint ~= false then
+            BuffCheck3:SendMessage("Interface hidden")
+        end
     else
         BuffCheck3Frame:Show()
-    end
-    if shouldprint ~= false then
-        BuffCheck3:SendMessage("Interface showing")
+        BuffCheck3UpdateFrameBuffString:Show()
+        BuffCheck3UpdateFrameBuffCount:Show()
+        if shouldprint ~= false then
+            BuffCheck3:SendMessage("Interface showing")
+        end
     end
 end
 
@@ -913,6 +920,7 @@ function BuffCheck3:ShowInactiveConsumes()
     end
     if numInactive == 0 then
         BuffCheck3:HideAllButtons()
+        -- only want to hide temporarily so not using BuffCheck3:ShowFrame(false)
         BuffCheck3Frame:Hide()
         BuffCheck3.AllActive = true
     end
