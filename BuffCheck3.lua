@@ -517,7 +517,7 @@ function BuffCheck3:UpdateBuffCount()
 
     -- mh/oh - NOTE: cant check if this is a totem buff in the case of Horde so some weird logic
     local class = UnitClass("player")
-    local hasMainHandEnchant, _, _, hasOffHandEnchant, _, _, _, _, _ = GetWeaponEnchantInfo()
+    local hasMainHandEnchant, _, _, _, hasOffHandEnchant = GetWeaponEnchantInfo()
     local mainHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
     local offHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("SecondaryHandSlot"))
     if UnitFactionGroup("player") == "Horde" then
@@ -588,7 +588,7 @@ function BuffCheck3:IsWeaponBuffName(buffname)
 end
 
 function BuffCheck3:IsWeaponBuffsPresent()
-    local hasMainHandEnchant, mainHandExpiration, _, hasOffHandEnchant, offHandExpiration, _, _, _, _ = GetWeaponEnchantInfo()
+    local hasMainHandEnchant, mainHandExpiration, _, _, hasOffHandEnchant, offHandExpiration = GetWeaponEnchantInfo()
     local mainHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
     local offHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("SecondaryHandSlot"))
     local faction = UnitFactionGroup("player")
