@@ -13,6 +13,8 @@ BuffCheck3_ExpirationWarnings = {
     five = {}
 }
 
+BuffCheck3.HighestBuffCount = 0
+
 -- [link] = count
 BuffCheck3.BagContents = {}
 
@@ -105,6 +107,8 @@ function SlashCmdList.BUFFCHECK(args)
         else
             BuffCheck3:SendMessage("Missing Size")
         end
+    elseif BuffCheck3:HasValue(words, "highestcount") then
+        BuffCheck3:SendMessage("Highest Buff Count: " .. tostring(BuffCheck3.HighestBuffCount))
     else
         BuffCheck3:SendMessage("Options: update, show, hide, lock, unlock, resize")
     end
@@ -539,6 +543,11 @@ function BuffCheck3:UpdateBuffCount()
         if res ~= nil then
             BuffCheck3.BuffCount = BuffCheck3.BuffCount + 1
         end
+    end
+
+    -- update highest
+    if BuffCheck3.BuffCount > BuffCheck3.HighestBuffCount then
+        BuffCheck3.HighestBuffCount = BuffCheck3.BuffCount
     end
 
     -- update the text
