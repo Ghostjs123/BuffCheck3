@@ -17,12 +17,14 @@ BuffCheck3.MHWasActive = false
 BuffCheck3.OHWasActive = false
 
 BuffCheck3.HighestBuffCount = 0
+BuffCheck3.BuffCapTimes = {}
 
 -- [link] = count
 BuffCheck3.BagContents = {}
 
 -- OnUpdate variables
 BuffCheck3_TimeSinceLastUpdate = 0
+BuffCheck3.OnUpdateCount = 0
 BuffCheck3.WasInCombat = false
 BuffCheck3.WasSpellTargeting = false
 BuffCheck3.AutoShowd = false
@@ -111,7 +113,7 @@ function SlashCmdList.BUFFCHECK(args)
             BuffCheck3:SendMessage("Missing Size")
         end
     elseif BuffCheck3:HasValue(words, "highestcount") then
-        BuffCheck3:SendMessage("Highest Buff Count: " .. tostring(BuffCheck3.HighestBuffCount))
+        BuffCheck3:PrintHighestCount()
     else
         BuffCheck3:SendMessage("Options: update, show, hide, lock, unlock, resize")
     end
@@ -162,6 +164,7 @@ function BuffCheck3_OnUpdate(self, elapsed)
     BuffCheck3_TimeSinceLastUpdate = BuffCheck3_TimeSinceLastUpdate + elapsed
     if BuffCheck3_TimeSinceLastUpdate > 0.5 then
         BuffCheck3_TimeSinceLastUpdate = 0
+        BuffCheck3.OnUpdateCount = BuffCheck3.OnUpdateCount + 1
 
         local incombat = UnitAffectingCombat("player")
 
@@ -449,6 +452,21 @@ function BuffCheck3:ResizeFrame(size)
     BuffCheck3:LockFrame(false, false)
 end
 
+function BuffCheck3:PrintHighestCount()
+    BuffCheck3:SendMessage("Highest Buff Count: " .. tostring(BuffCheck3.HighestBuffCount))
+    if table.getn(BuffCheck3.BuffCapTimes) > 0 then
+        local msg = "Buffcap at:"
+        for i, t in ipairs(BuffCheck3.BuffCapTimes) do
+            if i == 1 then
+                msg = msg .. (" " .. t)
+            else
+                msg = msg .. (", " .. t)
+            end
+        end
+        BuffCheck3:SendMessage(msg)
+    end
+end
+
 --=================================================================
 -- Main Addon Functions
 
@@ -558,6 +576,17 @@ function BuffCheck3:UpdateBuffCount()
     -- update highest
     if BuffCheck3.BuffCount > BuffCheck3.HighestBuffCount then
         BuffCheck3.HighestBuffCount = BuffCheck3.BuffCount
+    end
+
+    -- check for buff cap
+    if BuffCheck3.BuffCount >= 32 then
+        -- only print a message every 20sec
+        if BuffCheck3.OnUpdateCount > 40 then -- incremented every half second
+            BuffCheck3.OnUpdateCount = 0
+            BuffCheck3:SendMessage("WARNING - at 32 buffs")
+            local hour, minute = GetGameTime()
+            table.insert(BuffCheck3.BuffCapTimes, hour .. ":" .. minute)
+        end
     end
 
     -- update the text
