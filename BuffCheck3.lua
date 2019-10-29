@@ -8,10 +8,13 @@ BuffCheck3_TestTable = {}
 BuffCheck3_SavedConsumes = {}
 BuffCheck3_Config = {}
 
+-- expiration variables
 BuffCheck3_ExpirationWarnings = {
     two = {},
     five = {}
 }
+BuffCheck3.MHWasActive = false
+BuffCheck3.OHWasActive = false
 
 BuffCheck3.HighestBuffCount = 0
 
@@ -674,7 +677,7 @@ function BuffCheck3:GiveFiveMinWarning(consume)
         consume = "Food Buff"
     end
     if not BuffCheck3:HasValue(BuffCheck3_ExpirationWarnings["five"], consume) then
-        BuffCheck3:SendExpirationMessage(consume, " has 5 minutes remaining", nil)
+        BuffCheck3:SendExpirationMessage(consume, " has 5 minutes remaining")
         table.insert(BuffCheck3_ExpirationWarnings["five"], consume)
     end
 end
@@ -685,7 +688,7 @@ function BuffCheck3:GiveTwoMinWarning(consume, wep)
         consume = "Food Buff"
     end
     if not BuffCheck3:HasValue(BuffCheck3_ExpirationWarnings["two"], consume) then
-        BuffCheck3:SendExpirationMessage(consume, " has 2 minutes remaining", nil)
+        BuffCheck3:SendExpirationMessage(consume, " has 2 minutes remaining")
         table.insert(BuffCheck3_ExpirationWarnings["two"], consume)
     end
 end
@@ -697,6 +700,10 @@ function BuffCheck3:GiveWepExpirationWarning(exp1, exp2)
         elseif exp1 < 300 then -- 5 mins
             BuffCheck3:GiveFiveMinWeaponWarning(f.consume, "mainhand")
         end
+    elseif exp1 == nil and BuffCheck3.MHWasActive then
+        BuffCheck3.MHWasActive = false
+        BuffCheck3:SendExpirationMessage(GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot")), " has expired")
+        BuffCheck3:ClearExpirationTimer("mainhand")
     end
     if exp2 then
         if exp2 < 120 then -- 2 mins
@@ -704,6 +711,10 @@ function BuffCheck3:GiveWepExpirationWarning(exp1, exp2)
         elseif exp2 < 300 then -- 5 mins
             BuffCheck3:GiveFiveMinWeaponWarning(f.consume, "offhand")
         end
+    elseif exp2 == nil and BuffCheck3.OHWasActive then
+        BuffCheck3.OHWasActive = false
+        BuffCheck3:SendExpirationMessage(GetInventoryItemLink("player", GetInventorySlotInfo("SecondaryHandSlot")), " has expired")
+        BuffCheck3:ClearExpirationTimer("offhand")
     end
 end
 
@@ -833,7 +844,9 @@ function BuffCheck3:SortConsumeFrameButtons()
             local isactive = BuffCheck3:IsBuffPresent(f.consume)
             if isactive then
                 table.insert(BuffCheck3.ActiveConsumes, f)
-                f.WasActive = true
+                if not BuffCheck3:IsWeaponBuff(f.consume) then
+                    f.WasActive = true
+                end
             else
                 table.insert(BuffCheck3.InactiveConsumes, f)
             end
@@ -848,12 +861,12 @@ function BuffCheck3:SortConsumeFrameButtons()
             local buffname, spellid = GetItemSpell(f.consume)
             if buffname == "Food" then
                 if not printedFoodBuff then
-                    BuffCheck3:SendExpirationMessage("Food Buff", " has expired", nil)
+                    BuffCheck3:SendExpirationMessage("Food Buff", " has expired")
                     BuffCheck3:ClearExpirationTimer("Food Buff")
                     printedFoodBuff = true
                 end
             else
-                BuffCheck3:SendExpirationMessage(f.consume, " has expired", nil)
+                BuffCheck3:SendExpirationMessage(f.consume, " has expired")
                 BuffCheck3:ClearExpirationTimer(f.consume)
             end
             f.WasActive = false
