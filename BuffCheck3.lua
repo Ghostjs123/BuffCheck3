@@ -28,6 +28,7 @@ BuffCheck3.OnUpdateCount = 0
 BuffCheck3.WasInCombat = false
 BuffCheck3.WasSpellTargeting = false
 BuffCheck3.AutoShowd = false
+BuffCheck3.AutoHid = false
 
 BuffCheck3_PrintFormat = "|c00f7f26c%s|r"
 
@@ -470,11 +471,18 @@ end
 --=================================================================
 -- Main Addon Functions
 
--- will auto show the BuffCheck3Frame once per session if in a raid
+-- will auto show/hide the BuffCheck3Frame based on group type
 function BuffCheck3:CheckGroupUpdate()
-    if not BuffCheck3Frame:IsShown() and UnitInRaid("player") and not BuffCheck3.AutoShowd then
+    -- NOTE: BuffCheck3_Config["showing"] must be false to auto show/hide
+    if not BuffCheck3Frame:IsShown() and UnitInRaid("player") and BuffCheck3_Config["showing"] == false then
         BuffCheck3Frame:Show()
-        BuffCheck3.AutoShowd = true
+        BuffCheck3UpdateFrameBuffString:Show()
+        BuffCheck3UpdateFrameBuffCount:Show()
+    end
+    if BuffCheck3Frame:IsShown() and not UnitInRaid("player") and BuffCheck3_Config["showing"] == false then
+        BuffCheck3Frame:Hide()
+        BuffCheck3UpdateFrameBuffString:Hide()
+        BuffCheck3UpdateFrameBuffCount:Hide()
     end
 end
 
