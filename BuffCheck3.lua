@@ -217,6 +217,7 @@ function BuffCheck3_MoveToAvailable(self)
     if index ~= -1 then
         table.remove(BuffCheck3.AddedButtons, index)
     end
+    BuffCheck3:HideConsumeFrameButton(self.consume)
     BuffCheck3:ShowConsumeButtons()
     -- update the frame
     BuffCheck3:UpdateFrame()
@@ -777,9 +778,25 @@ function BuffCheck3:SortConsumeFrameButtons()
     end
 end
 
+function BuffCheck3:HideConsumeFrameButton(consume)
+    for _, f in pairs(BuffCheck3.AllConsumeButtons) do
+        if f.consume == consume then
+            f:Hide()
+        end
+    end
+end
+
 function BuffCheck3:HideActiveButtons()
     for _, f in pairs(BuffCheck3.ActiveConsumes) do
         f:Hide()
+    end
+end
+
+function BuffCheck3:HideAllButtons()
+    for _, f in pairs(BuffCheck3.AllConsumeButtons) do
+        if f:IsShown() then
+            f:Hide()
+        end
     end
 end
 
@@ -789,15 +806,15 @@ function BuffCheck3:ShowInactiveConsumes()
 
     if BuffCheck3_Config["vertical"] then
        -- update dimensions
-       BuffCheck3Frame:SetWidth(52)
-       BuffCheck3Frame:SetHeight(52 + 36*(numInactive -1))
+        BuffCheck3Frame:SetWidth(52)
+        BuffCheck3Frame:SetHeight(52 + 36*(numInactive -1))
 
-       BuffCheck3:HideActiveButtons()
-       for i, f in ipairs(BuffCheck3.InactiveConsumes) do
-           f:ClearAllPoints()
-           f:SetPoint("TOPLEFT", parent, "TOPLEFT", 11, -11 - 36*(i-1))
-           f:Show()
-       end
+        BuffCheck3:HideActiveButtons()
+        for i, f in ipairs(BuffCheck3.InactiveConsumes) do
+            f:ClearAllPoints()
+            f:SetPoint("TOPLEFT", parent, "TOPLEFT", 11, -11 - 36*(i-1))
+            f:Show()
+        end
     else
         -- horizontal
         -- update dimensions
@@ -812,9 +829,15 @@ function BuffCheck3:ShowInactiveConsumes()
         end
     end
 
-    -- if either lists are empty add a msg
+    -- if none active
+    if BuffCheck3.AllActive and numInactive > 0 then
+        BuffCheck3Frame:Show()
+        BuffCheck3.AllActive = false
+    end
     if numInactive == 0 then
-        BuffCheck3:Hide()
+        BuffCheck3:HideAllButtons()
+        BuffCheck3Frame:Hide()
+        BuffCheck3.AllActive = true
     end
 end
 
