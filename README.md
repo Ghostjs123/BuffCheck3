@@ -10,6 +10,7 @@ Also gives a five and two minute expiration warning for each consume, then gives
 
 **Notes:**
 * The frame cannot update when in combat
+* Displays the true amount of buffs on your character (gear enchants from items etc)
 
 **Commands:**<br/><br/>
 /bc **update**
@@ -43,10 +44,6 @@ Also gives a five and two minute expiration warning for each consume, then gives
 /bc **resize** **number**
 
    - scales the frame, default is 100
-
-/bc **clear**
-
-  - clears the list of saved consumes
 
 This addon was made by Kaymon-Incendius \<Scuba Cops>. If you find
 any bugs or issues with the addon contact him in game or on discord Kaymon#3528.

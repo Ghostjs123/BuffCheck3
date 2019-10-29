@@ -105,8 +105,6 @@ function SlashCmdList.BUFFCHECK(args)
         else
             BuffCheck3:SendMessage("Missing Size")
         end
-    elseif BuffCheck3:HasValue(words, "clear") then
-        BuffCheck3:Clear()
     else
         BuffCheck3:SendMessage("Options: update, show, hide, lock, unlock, resize")
     end
@@ -199,6 +197,9 @@ function BuffCheck3_OnUpdate(self, elapsed)
 
         -- check for soon to expire
         BuffCheck3:CheckExpirationTimes()
+
+        -- update buff count
+        BuffCheck3:UpdateBuffCount()
     end
 end
 
@@ -401,6 +402,10 @@ function BuffCheck3:LockFrame(shouldlock, shouldprint)
         if shouldprint ~= false then
             BuffCheck3:SendMessage("Interface locked")
         end
+
+        -- re-adjust buff count text
+        BuffCheck3UpdateFrameBuffString:ClearAllPoints()
+        BuffCheck3UpdateFrameBuffString:SetPoint("BOTTOMLEFT", getglobal("BuffCheck3UpdateFrame"), 0, -1)
     else
         -- default
         BuffCheck3Frame:SetBackdrop(BuffCheck3.UnlockedBackdrop)
@@ -408,6 +413,10 @@ function BuffCheck3:LockFrame(shouldlock, shouldprint)
         if shouldprint ~= false then
             BuffCheck3:SendMessage("Interface unlocked")
         end
+
+        -- re-adjust buff count text
+        BuffCheck3UpdateFrameBuffString:ClearAllPoints()
+        BuffCheck3UpdateFrameBuffString:SetPoint("BOTTOMLEFT", getglobal("BuffCheck3UpdateFrame"), 0, -7)
     end
 end
 
@@ -424,12 +433,6 @@ function BuffCheck3:ResizeFrame(size)
     BuffCheck3Frame:ClearAllPoints()
     BuffCheck3Frame:SetPoint("CENTER", "UIParent") -- inelegant solution, but w/e
     BuffCheck3:LockFrame(false, false)
-end
-
-function BuffCheck3:Clear()
-    for k in pairs(BuffCheck3_SavedConsumes) do
-        BuffCheck3_SavedConsumes[k] = nil
-    end
 end
 
 --=================================================================
@@ -481,6 +484,69 @@ function BuffCheck3:UpdateBagContents()
         end
     end
 end
+
+-- needs to check for
+-- helm/leg/shoulder/mh/oh enchant
+-- warrior/druid stance/form
+-- all visible buffs
+function BuffCheck3:UpdateBuffCount()
+    BuffCheck3.BuffCount = 0
+
+    -- HeadSlot, ShoulderSlot, LegsSlot
+    local slotIDs = {1, 3, 7}
+    for _, slotID in pairs(slotIDs) do
+        local link = GetInventoryItemLink("player", slotID)
+        if link then -- nil if no item equipped
+            local itemID, enchantID = link:match("item:(%d+):(%d+)")
+            if enchantID ~= nil then
+                BuffCheck3.BuffCount = BuffCheck3.BuffCount + 1
+            end
+        end
+    end
+
+    -- mh/oh - NOTE: cant check if this is a totem buff in the case of Horde so some weird logic
+    local class = UnitClass("player")
+    local hasMainHandEnchant, _, _, hasOffHandEnchant, _, _, _, _, _ = GetWeaponEnchantInfo()
+    local mainHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
+    local offHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("SecondaryHandSlot"))
+    if UnitFactionGroup("player") == "Horde" then
+        if class == "Warrior" or class == "Rogue" then -- ignore mainhand
+            if BuffCheck3:ItemIsEnchantable(offHandLink) and hasOffHandEnchant then
+                BuffCheck3.BuffCount = BuffCheck3.BuffCount + 1
+            end
+        else -- horde but not melee so oil
+            if BuffCheck3:ItemIsEnchantable(mainHandLink) and hasMainHandEnchant then
+                BuffCheck3.BuffCount = BuffCheck3.BuffCount + 1
+            end
+        end
+    else -- Alliance, check both weps
+        if BuffCheck3:ItemIsEnchantable(mainHandLink) and hasMainHandEnchant then
+            BuffCheck3.BuffCount = BuffCheck3.BuffCount + 1
+        end
+        if BuffCheck3:ItemIsEnchantable(offHandLink) and hasOffHandEnchant then
+            BuffCheck3.BuffCount = BuffCheck3.BuffCount + 1
+        end
+    end
+
+    -- warrior/druid - got class above
+    if class == "Warrior" or class == "Druid" then
+        BuffCheck3.BuffCount = BuffCheck3.BuffCount + 1
+    end
+
+    -- all visible buffs
+    for x = 1, 32 do
+        local res = UnitBuff("player", x)
+        if res ~= nil then
+            BuffCheck3.BuffCount = BuffCheck3.BuffCount + 1
+        end
+    end
+
+    -- update the text
+    BuffCheck3UpdateFrameBuffCount:SetText(BuffCheck3.BuffCount)
+end
+
+--=================================================================
+-- Is Buff Present Functions
 
 function BuffCheck3:IsFoodBuffPresent()
     for x = 1, 32 do
@@ -562,11 +628,13 @@ end
 
 function BuffCheck3:ItemIsEnchantable(itemlink)
     if itemlink == nil then return false end
-    -- name, link, quality, iLevel, reqLevel, class, subclass
     local _, _, _, _, _, _, sType = GetItemInfo(itemlink)
     if sType == nil then return false end
     return string.sub(sType, 0, 1) == "O" or string.sub(sType, 0, 1) == "D" or string.sub(sType, 0, 1) == "T" or string.sub(sType, 0, 1) == "F"
 end
+
+--=================================================================
+-- Expiration Functions
 
 function BuffCheck3:CheckExpirationTimes()
     for _, f in pairs(BuffCheck3.ActiveConsumes) do

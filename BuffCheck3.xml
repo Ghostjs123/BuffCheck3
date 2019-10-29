@@ -341,8 +341,41 @@
             <OnDragStop>
                 self:StopMovingOrSizing()
             </OnDragStop>
-        </Scripts> 
+        </Scripts>
+        
     </Frame>
 
-    <Frame name="BuffCheck3UpdateFrame"></Frame>
+    <Frame name="BuffCheck3UpdateFrame">
+        <TitleRegion setAllPoints="true"/>
+        <Size>
+            <AbsDimension x="54" y="54" />
+        </Size>
+        <Anchors>
+            <Anchor point="TOPLEFT" relativeTo="BuffCheck3Frame"/>
+        </Anchors>
+        <Layers>
+            <Layer level="ARTWORK">
+                <FontString name="$parentBuffString" font="GameFontHighlight" justifyH="LEFT" text="Buff Count: ">
+                    <Size x="90" y="22" />
+                    <Anchors>
+                        <Anchor point="BOTTOMLEFT" relativeTo="$parent">
+                            <Offset>
+                                <AbsDimension x="0" y="-1"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+                <FontString name="$parentBuffCount" font="GameFontHighlight" justifyH="LEFT" text="0">
+                    <Size x="20" y="22" />
+                    <Anchors>
+                        <Anchor point="TOPRIGHT" relativeTo="$parentBuffString">
+                            <Offset>
+                                <AbsDimension x="0" y="-1"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+            </Layer>
+        </Layers>
+    </Frame>
 </Ui>
