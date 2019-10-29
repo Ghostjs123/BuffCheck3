@@ -495,13 +495,13 @@ function BuffCheck3:IsWeaponBuff(consume)
     local buffname, spellid = GetItemSpell(consume)
     local words = {}
     for word in buffname:gmatch("%w+") do table.insert(words, word) end
-    return words[1] == "Sharpen" or words[1] == "Enhance"
+    return words[1] == "Sharpen" or words[1] == "Enhance" or words[1] == "Deadly" or words[1] == "Crippling" or words[1] == "Mind-numbing" or words[1] == "Wound"
 end
 
 function BuffCheck3:IsWeaponBuffName(buffname)
     local words = {}
     for word in buffname:gmatch("%w+") do table.insert(words, word) end
-    return words[1] == "Sharpen" or words[1] == "Enhance"
+    return words[1] == "Sharpen" or words[1] == "Enhance" or words[1] == "Deadly" or words[1] == "Crippling" or words[1] == "Mind-numbing" or words[1] == "Wound"
 end
 
 function BuffCheck3:IsWeaponBuffsPresent()
