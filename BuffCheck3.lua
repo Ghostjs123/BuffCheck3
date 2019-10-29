@@ -697,9 +697,9 @@ function BuffCheck3:GiveWepExpirationWarning(exp1, exp2)
     if exp1 then
         BuffCheck3.MHWasActive = true
         if exp1 < 120 then -- 2 mins
-            BuffCheck3:GiveTwoMinWeaponWarning(f.consume, "mainhand")
+            BuffCheck3:GiveTwoMinWeaponWarning("mainhand")
         elseif exp1 < 300 then -- 5 mins
-            BuffCheck3:GiveFiveMinWeaponWarning(f.consume, "mainhand")
+            BuffCheck3:GiveFiveMinWeaponWarning("mainhand")
         end
     elseif exp1 == nil and BuffCheck3.MHWasActive then
         BuffCheck3.MHWasActive = false
@@ -709,9 +709,9 @@ function BuffCheck3:GiveWepExpirationWarning(exp1, exp2)
     if exp2 then
         BuffCheck3.OHWasActive = true
         if exp2 < 120 then -- 2 mins
-            BuffCheck3:GiveTwoMinWeaponWarning(f.consume, "offhand")
+            BuffCheck3:GiveTwoMinWeaponWarning("offhand")
         elseif exp2 < 300 then -- 5 mins
-            BuffCheck3:GiveFiveMinWeaponWarning(f.consume, "offhand")
+            BuffCheck3:GiveFiveMinWeaponWarning("offhand")
         end
     elseif exp2 == nil and BuffCheck3.OHWasActive then
         BuffCheck3.OHWasActive = false
