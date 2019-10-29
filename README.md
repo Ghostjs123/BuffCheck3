@@ -31,6 +31,14 @@ Also gives a five and two minute expiration warning for each consume, then gives
 /bc **unlock**
 
    - unlocks the frame
+
+/bc **horizontal**
+
+   - makes the frame horizontal
+
+/bc **vertical**
+
+   - makes the frame vertical
    
 /bc **resize** **number**
 
