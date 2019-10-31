@@ -484,14 +484,14 @@ function BuffCheck3:CheckGroupUpdate()
     end
 end
 
-function BuffCheck3:GetBagCount(consume)
-    for con, count in pairs(BuffCheck3.BagContents) do
-        if con == consume then
-            return tostring(count)
-        end
-    end
-    return "0"
-end
+-- function BuffCheck3:GetBagCount(consume)
+--     for con, count in pairs(BuffCheck3.BagContents) do
+--         if con == consume then
+--             return tostring(count)
+--         end
+--     end
+--     return "0"
+-- end
 
 function BuffCheck3:UpdateBagContents()
     BuffCheck3.BagContents = {}
@@ -499,13 +499,15 @@ function BuffCheck3:UpdateBagContents()
     local itemType
     local count
     local name
+    local buffname
     for i = 0, 4 do
         for j = 1, GetContainerNumSlots(i) do
             _, count, _, _, _, _, link = GetContainerItemInfo(i, j)
             if link then
                 name = GetItemInfo(link)
                 _, _, _, _, _, itemType = GetItemInfo(link)
-                if name and (itemType == "Consumable" or itemType == "Quest" or string.match(name, "Sharpening") or string.match(name, "Weightstone")) then
+                buffname = GetItemSpell(link)
+                if name and buffname and (itemType == "Consumable" or itemType == "Quest" or string.match(name, "Sharpening") or string.match(name, "Weightstone")) then
                     if BuffCheck3.BagContents[link] then
                         BuffCheck3.BagContents[link] = BuffCheck3.BagContents[link] + count
                     else
@@ -519,6 +521,12 @@ function BuffCheck3:UpdateBagContents()
     for _, consume in pairs(BuffCheck3_SavedConsumes) do
         if not BuffCheck3.BagContents[consume] then
             BuffCheck3.BagContents[consume] = 0
+        end
+    end
+    -- also toss in any existing button's consume
+    for _, f in pairs(BuffCheck3.AllConsumeButtons) do
+        if not BuffCheck3.BagContents[f.consume] then
+            BuffCheck3.BagContents[f.consume] = 0
         end
     end
 end
@@ -802,7 +810,7 @@ end
 function BuffCheck3:UpdateItemCounts()
     for _, f in pairs(BuffCheck3.AllConsumeButtons) do
         local fcount = getglobal(f:GetName().."Count")
-        local count = BuffCheck3:GetBagCount(f.consume)
+        local count = BuffCheck3.BagContents[f.consume]
         if fcount:GetText() ~= tostring(count) then
             fcount:SetText(count)
             if string.len(count) == 2 then
