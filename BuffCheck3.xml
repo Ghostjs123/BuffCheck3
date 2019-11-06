@@ -56,7 +56,7 @@
                 </FontString>
                 <FontString name="$parentDuration" font="GameFontNormal" justifyH="LEFT">
                     <Size>
-                        <AbsDimension x="20" y="20"/>
+                        <AbsDimension x="40" y="20"/>
                     </Size>
                     <Anchors>
                         <Anchor point="LEFT" relativeTo="$parentIcon" relativePoint="RIGHT">
