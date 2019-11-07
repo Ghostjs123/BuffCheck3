@@ -151,6 +151,8 @@ end
 function BuffCheck3:Init()
     BuffCheck3:CleanupSavedConsumes()
 
+    BuffCheck3:ResizeFrame(BuffCheck3_Config["scale"])
+
     BuffCheck3:LockFrame(BuffCheck3_Config["locked"], false)
 
     BuffCheck3:ShowFrame(BuffCheck3_Config["showing"])
@@ -467,12 +469,23 @@ function BuffCheck3:VerticalFrame(vertical)
 end
 
 function BuffCheck3:ResizeFrame(size)
-    BuffCheck3_Config["scale"] = size
+    if size == nil then
+        -- set defaults
+        size = 100
+        BuffCheck3_Config["scale"] = 100
+    end
+    local shouldResetPos = false
+    if BuffCheck3_Config["scale"] ~= size then
+        BuffCheck3_Config["scale"] = size
+        shouldResetPos = true
+    end
     BuffCheck3Frame:SetScale(BuffCheck3_Config["scale"] / 100)
     BuffCheck3WeaponFrame:SetScale(BuffCheck3_Config["scale"] / 100)
-    BuffCheck3Frame:ClearAllPoints()
-    BuffCheck3Frame:SetPoint("CENTER", "UIParent") -- inelegant solution, but w/e
-    BuffCheck3:LockFrame(false, false)
+    if shouldResetPos then
+        BuffCheck3Frame:ClearAllPoints()
+        BuffCheck3Frame:SetPoint("CENTER", "UIParent") -- inelegant solution, but w/e
+        BuffCheck3:LockFrame(false, false)
+    end
 end
 
 function BuffCheck3:PrintHighestCount()
