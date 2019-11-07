@@ -644,6 +644,9 @@ end
 function BuffCheck3:IsWeaponBuff(consume)
     local buffname, spellid = GetItemSpell(consume)
     if buffname == nil then
+        if consume == "mainhand" or consume == "offhand" then
+            return true
+        end
         DEFAULT_CHAT_FRAME:AddMessage(consume)
     end
     local words = {}
