@@ -49,5 +49,9 @@ Also gives a five and two minute expiration warning for each consume, then gives
 
    - prints the highest buff count for this session (max 32)
 
+/bc **missing**
+
+   - prints any added consume that is missing from your bags
+
 This addon was made by Kaymon-Incendius \<Scuba Cops>. If you find
 any bugs or issues with the addon contact him in game or on discord Kaymon#3528.

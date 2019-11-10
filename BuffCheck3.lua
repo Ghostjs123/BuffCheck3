@@ -113,8 +113,10 @@ function SlashCmdList.BUFFCHECK(args)
         end
     elseif BuffCheck3:HasValue(words, "highestcount") then
         BuffCheck3:PrintHighestCount()
+    elseif BuffCheck3:HasValue(words, "missing") then
+        BuffCheck3:PrintMissing()
     else
-        BuffCheck3:SendMessage("Options: update, show, hide, lock, unlock, resize")
+        BuffCheck3:SendMessage("Options: update, show, hide, lock, unlock, vertical, horizontal, resize, highestcount, missing")
     end
 end
 
@@ -500,6 +502,14 @@ function BuffCheck3:PrintHighestCount()
             end
         end
         BuffCheck3:SendMessage(msg)
+    end
+end
+
+function BuffCheck3:PrintMissing()
+    for _, consume in pairs(BuffCheck3_SavedConsumes) do
+        if BuffCheck3.BagContents[consume] == nil or BuffCheck3.BagContents[consume] == 0 then
+            BuffCheck3:SendMessage("missing " .. consume)
+        end
     end
 end
 
