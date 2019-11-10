@@ -661,13 +661,17 @@ function BuffCheck3:IsWeaponBuff(consume)
     end
     local words = {}
     for word in buffname:gmatch("%w+") do table.insert(words, word) end
-    return words[1] == "Sharpen" or words[1] == "Enhance" or words[1] == "Deadly" or words[1] == "Crippling" or words[1] == "Mind-numbing" or words[1] == "Wound" or words[1] == "Instant"
+    return words[1] == "Sharpen" or words[1] == "Enhance" or words[1] == "Deadly" or words[1] == "Crippling" 
+            or words[1] == "Mind-numbing" or words[1] == "Wound" or words[1] == "Instant" or words[1] == "Shiny" 
+            or words[1] == "Aquadynamic" or words[1] == "Nightcrawlers" or words[1] == "Flesh"
 end
 
 function BuffCheck3:IsWeaponBuffName(buffname)
     local words = {}
     for word in buffname:gmatch("%w+") do table.insert(words, word) end
-    return words[1] == "Sharpen" or words[1] == "Enhance" or words[1] == "Deadly" or words[1] == "Crippling" or words[1] == "Mind-numbing" or words[1] == "Wound" or words[1] == "Instant"
+    return words[1] == "Sharpen" or words[1] == "Enhance" or words[1] == "Deadly" or words[1] == "Crippling" 
+            or words[1] == "Mind-numbing" or words[1] == "Wound" or words[1] == "Instant" or words[1] == "Shiny" 
+            or words[1] == "Aquadynamic" or words[1] == "Nightcrawlers" or words[1] == "Flesh"
 end
 
 function BuffCheck3:IsWeaponBuffsPresent()
@@ -720,7 +724,8 @@ function BuffCheck3:ItemIsEnchantable(itemlink)
     if itemlink == nil then return false end
     local _, _, _, _, _, _, sType = GetItemInfo(itemlink)
     if sType == nil then return false end
-    return string.sub(sType, 0, 1) == "O" or string.sub(sType, 0, 1) == "D" or string.sub(sType, 0, 1) == "T" or string.sub(sType, 0, 1) == "F"
+    local c = string.sub(sType, 0, 1)
+    return c == "O" or c == "D" or c == "T" or c == "F"
 end
 
 --=================================================================
