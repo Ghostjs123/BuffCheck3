@@ -4,20 +4,9 @@ BuffCheck3.debugmode = true;
 BuffCheck3_DefaultFrameSize = 100
 
 -- saved variables
-BuffCheck3_TestTable = {}
+BuffCheck3_Textures = {}
 BuffCheck3_SavedConsumes = {}
 BuffCheck3_Config = {}
-
--- expiration variables
-BuffCheck3_ExpirationWarnings = {
-    two = {},
-    five = {}
-}
-BuffCheck3.MHWasActive = false
-BuffCheck3.OHWasActive = false
-
-BuffCheck3.HighestBuffCount = 0
-BuffCheck3.BuffCapTimes = {}
 
 -- [link] = count
 BuffCheck3.BagContents = {}
@@ -111,12 +100,10 @@ function SlashCmdList.BUFFCHECK(args)
         else
             BuffCheck3:SendMessage("Missing Size")
         end
-    elseif BuffCheck3:HasValue(words, "highestcount") then
-        BuffCheck3:PrintHighestCount()
     elseif BuffCheck3:HasValue(words, "missing") then
         BuffCheck3:PrintMissing()
     else
-        BuffCheck3:SendMessage("Options: update, show, hide, lock, unlock, vertical, horizontal, resize, highestcount, missing")
+        BuffCheck3:SendMessage("Options: update, show, hide, lock, unlock, vertical, horizontal, resize, missing")
     end
 end
 
@@ -233,9 +220,6 @@ function BuffCheck3_OnUpdate(self, elapsed)
 
         -- check for soon to expire
         BuffCheck3:CheckExpirationTimes()
-
-        -- update buff count
-        BuffCheck3:UpdateBuffCount()
     end
 end
 
@@ -245,7 +229,7 @@ end
 function BuffCheck3_MoveToAvailable(self)
     local index = BuffCheck3:GetIndexInTable(BuffCheck3_SavedConsumes, self.consume)
     if index == -1 then
-        BuffCheck3:SendMessage("Error - could find " .. tostring(consume) .. " in BuffCheck3_SavedConsumes")
+        BuffCheck3:SendMessage("Error - could not find " .. tostring(consume) .. " in BuffCheck3_SavedConsumes")
         return
     end
     table.remove(BuffCheck3_SavedConsumes, index)
@@ -301,8 +285,8 @@ function BuffCheck3:CreateConsumeListButton(consume)
     local fname = "BuffCheck3ConsumeButton" .. (table.getn(BuffCheck3.AvailableButtons)
         + table.getn(BuffCheck3.AddedButtons))
 
-     -- more info on the item
-     local name, _, quality, _, _, _, _, _, _, texture = GetItemInfo(consume)
+    -- more info on the item
+    local link, quality, texture = BuffCheck3:FindTextureInfo(consume)
 
     -- create the button
     f = CreateFrame("Button", fname, parent, "BuffCheck3ConsumeRowTemplate")
@@ -310,7 +294,7 @@ function BuffCheck3:CreateConsumeListButton(consume)
 
     -- set text
     local ftext = getglobal(fname.."Name")
-    ftext:SetText(name)
+    ftext:SetText(consume)
     local r,g,b = GetItemQualityColor(quality)
     ftext:SetTextColor(r,g,b)
 
@@ -326,8 +310,6 @@ end
 function BuffCheck3:UpdateConsumeList()
     -- create a button for each consume
     for consume, _ in pairs(BuffCheck3.BagContents) do
-        -- NOTE: GetItemInfo can return nil for items not in players WDB
-        -- check if the consume already has a button
         if not BuffCheck3:ConsumeListButtonExists(consume) then
             
             f = BuffCheck3:CreateConsumeListButton(consume)
@@ -422,15 +404,11 @@ function BuffCheck3:ShowFrame(shouldshow)
     if not shouldshow then
         -- Hide first so Show is the default
         BuffCheck3Frame:Hide()
-        BuffCheck3UpdateFrameBuffString:Hide()
-        BuffCheck3UpdateFrameBuffCount:Hide()
         if shouldprint ~= false then
             BuffCheck3:SendMessage("Interface hidden")
         end
     else
         BuffCheck3Frame:Show()
-        BuffCheck3UpdateFrameBuffString:Show()
-        BuffCheck3UpdateFrameBuffCount:Show()
         if shouldprint ~= false then
             BuffCheck3:SendMessage("Interface showing")
         end
@@ -446,10 +424,6 @@ function BuffCheck3:LockFrame(shouldlock, shouldprint)
         if shouldprint ~= false then
             BuffCheck3:SendMessage("Interface locked")
         end
-
-        -- re-adjust buff count text
-        BuffCheck3UpdateFrameBuffString:ClearAllPoints()
-        BuffCheck3UpdateFrameBuffString:SetPoint("BOTTOMLEFT", getglobal("BuffCheck3UpdateFrame"), 0, -1)
     else
         -- default
         BuffCheck3Frame:SetBackdrop(BuffCheck3.UnlockedBackdrop)
@@ -457,10 +431,6 @@ function BuffCheck3:LockFrame(shouldlock, shouldprint)
         if shouldprint ~= false then
             BuffCheck3:SendMessage("Interface unlocked")
         end
-
-        -- re-adjust buff count text
-        BuffCheck3UpdateFrameBuffString:ClearAllPoints()
-        BuffCheck3UpdateFrameBuffString:SetPoint("BOTTOMLEFT", getglobal("BuffCheck3UpdateFrame"), 0, -7)
     end
 end
 
@@ -490,21 +460,6 @@ function BuffCheck3:ResizeFrame(size)
     end
 end
 
-function BuffCheck3:PrintHighestCount()
-    BuffCheck3:SendMessage("Highest Buff Count: " .. tostring(BuffCheck3.HighestBuffCount))
-    if table.getn(BuffCheck3.BuffCapTimes) > 0 then
-        local msg = "Buffcap at:"
-        for i, t in ipairs(BuffCheck3.BuffCapTimes) do
-            if i == 1 then
-                msg = msg .. (" " .. t)
-            else
-                msg = msg .. (", " .. t)
-            end
-        end
-        BuffCheck3:SendMessage(msg)
-    end
-end
-
 function BuffCheck3:PrintMissing()
     for _, consume in pairs(BuffCheck3_SavedConsumes) do
         if BuffCheck3.BagContents[consume] == nil or BuffCheck3.BagContents[consume] == 0 then
@@ -521,23 +476,19 @@ function BuffCheck3:CheckGroupUpdate()
     -- NOTE: BuffCheck3_Config["showing"] must be false to auto show/hide
     if not BuffCheck3Frame:IsShown() and UnitInRaid("player") and BuffCheck3_Config["showing"] == false then
         BuffCheck3Frame:Show()
-        BuffCheck3UpdateFrameBuffString:Show()
-        BuffCheck3UpdateFrameBuffCount:Show()
     end
     if BuffCheck3Frame:IsShown() and not UnitInRaid("player") and BuffCheck3_Config["showing"] == false then
         BuffCheck3Frame:Hide()
-        BuffCheck3UpdateFrameBuffString:Hide()
-        BuffCheck3UpdateFrameBuffCount:Hide()
     end
 end
 
--- function BuffCheck3:GetConsumeCount(consume)
---     for con, count in pairs(BuffCheck3.BagContents) do
---         if con == BuffCheck3:GetRawName(consume) then
---             return count
---         end
---     end
--- end
+-- return link, quality, texture if in BuffCheck3_Config
+function BuffCheck3:FindTextureInfo(consume)
+    if BuffCheck3_Textures[consume] then
+        return BuffCheck3_Textures[consume].link, BuffCheck3_Textures[consume].quality, BuffCheck3_Textures[consume].texture
+    end
+    return nil, nil, nil
+end
 
 function BuffCheck3:UpdateBagContents()
     -- NOTE: found that using itemlinks as keys in a table is very inconsistent for lookups
@@ -545,97 +496,41 @@ function BuffCheck3:UpdateBagContents()
     BuffCheck3.BagContents = {}
     for i = 0, 4 do
         for j = 1, GetContainerNumSlots(i) do
-            local _, count, _, _, _, _, link = GetContainerItemInfo(i, j)
+            local texture, count, _, _, _, _, link = GetContainerItemInfo(i, j)
+
             if link then
-                local name = GetItemInfo(link)
+                local name, _, quality = GetItemInfo(link)
                 local _, _, _, _, _, itemType = GetItemInfo(link)
                 local buffname = GetItemSpell(link)
+
                 if name and buffname and (itemType == "Consumable" or itemType == "Quest" or string.match(name, "Sharpening") or string.match(name, "Weightstone") or string.match(name, "Aquadynamic")) then
+                    -- add to BagContents
                     if BuffCheck3.BagContents[name] then
                         BuffCheck3.BagContents[name] = BuffCheck3.BagContents[name] + count
                     else
                         BuffCheck3.BagContents[name] = count
                     end
+
+                    -- if consume's texture not in Config then add it
+                    if texture and not BuffCheck3_Textures[name] then
+                        BuffCheck3_Textures[name] = {link = link, texture = texture, quality = quality};
+                        BuffCheck3:SendMessage("Saved info for " .. tostring(link))
+                    end
                 end
             end
         end
     end
-    -- not tossing in saved consumes anymore bc GetItemInfo fails to find items not in bag
-    -- for _, consume in pairs(BuffCheck3_SavedConsumes) do
-    --     if not BuffCheck3.BagContents[consume] then
-    --         BuffCheck3.BagContents[consume] = 0
-    --     end
-    -- end
-    -- also toss in any existing button's consume
-    -- for _, f in pairs(BuffCheck3.AllConsumeButtons) do
-    --     if not BuffCheck3.BagContents[f.consume] then
-    --         BuffCheck3.BagContents[consume] = 0
-    --     end
-    -- end
-end
-
--- needs to check for
--- helm/leg/
--- warrior/druid stance/form
--- all visible buffs
-function BuffCheck3:UpdateBuffCount()
-    BuffCheck3.BuffCount = 0
-
-    -- HeadSlot, LegsSlot
-    local slotIDs = {1, 7}
-    for _, slotID in pairs(slotIDs) do
-        local link = GetInventoryItemLink("player", slotID)
-        if link then -- nil if no item equipped
-            local itemID, enchantID = link:match("item:(%d+):(%d+)")
-            if enchantID ~= nil then
-                BuffCheck3.BuffCount = BuffCheck3.BuffCount + 1
-            end
+    -- add 0 count for any other consume that exists
+    for _, consume in pairs(BuffCheck3_SavedConsumes) do
+        if not BuffCheck3.BagContents[consume] and BuffCheck3_Textures[consume] then
+            BuffCheck3.BagContents[consume] = 0
         end
     end
-
-    -- think windfury is still a buff so just checking for that
-    local class = UnitClass("player")
-    local hasMainHandEnchant = GetWeaponEnchantInfo()
-    local mainHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
-    if UnitFactionGroup("player") == "Horde" then
-        if class == "Warrior" or class == "Rogue" then
-            if BuffCheck3:ItemIsEnchantable(mainHandLink) and hasMainHandEnchant then
-                BuffCheck3.BuffCount = BuffCheck3.BuffCount + 1
-            end
+    for _, f in pairs(BuffCheck3.AllConsumeButtons) do
+        if not BuffCheck3.BagContents[f.consume] and BuffCheck3_Textures[consume] then
+            BuffCheck3.BagContents[consume] = 0
         end
     end
-
-    -- warrior/druid - got class above
-    if class == "Warrior" or class == "Druid" then
-        BuffCheck3.BuffCount = BuffCheck3.BuffCount + 1
-    end
-
-    -- all visible buffs
-    for x = 1, 32 do
-        local res = UnitBuff("player", x)
-        if res ~= nil then
-            BuffCheck3.BuffCount = BuffCheck3.BuffCount + 1
-        end
-    end
-
-    -- update highest
-    if BuffCheck3.BuffCount > BuffCheck3.HighestBuffCount then
-        BuffCheck3.HighestBuffCount = BuffCheck3.BuffCount
-    end
-
-    -- check for buff cap
-    if BuffCheck3.BuffCount >= 32 then
-        -- only print a message every 20sec
-        if BuffCheck3.OnUpdateCount > 40 then -- incremented every half second
-            BuffCheck3.OnUpdateCount = 0
-            BuffCheck3:SendMessage("WARNING - at 32 buffs")
-            local hour, minute = GetGameTime()
-            table.insert(BuffCheck3.BuffCapTimes, hour .. ":" .. minute)
-        end
-    end
-
-    -- update the text
-    BuffCheck3UpdateFrameBuffCount:SetText(BuffCheck3.BuffCount)
 end
 
 --=================================================================
@@ -657,7 +552,6 @@ function BuffCheck3:IsWeaponBuff(consume)
         if consume == "mainhand" or consume == "offhand" then
             return true
         end
-        DEFAULT_CHAT_FRAME:AddMessage(consume)
     end
     local words = {}
     for word in buffname:gmatch("%w+") do table.insert(words, word) end
@@ -736,16 +630,10 @@ function BuffCheck3:CheckExpirationTimes()
         if not BuffCheck3:IsWeaponBuff(f.consume) then -- weapon buff IsBuffPresent doesnt return time
             local _, exp1 = BuffCheck3:IsBuffPresent(f.consume)
             BuffCheck3:SetDuration(f, exp1)
-            if exp1 then -- only nil if error'd
-                if exp1 < 120 then -- 2 mins
-                    BuffCheck3:GiveTwoMinWarning(f.consume)
-                elseif exp1 < 300 then -- 5 mins
-                    BuffCheck3:GiveFiveMinWarning(f.consume)
-                elseif BuffCheck3:HasGivenExpirationWarning(f.consume) then
-                    -- refreshed consume
-                    BuffCheck3:ClearExpirationTimer(f.consume)
-                    BuffCheck3:SetDuration(f, 0)
-                end
+            if exp1 and exp1 < 120 then -- 2 mins
+                UIFrameFlash(f, 0.5, 0.5, -1)
+            elseif UIFrameIsFlashing(f) then
+                UIFrameFlashStop(f)
             end
         end
     end
@@ -755,158 +643,55 @@ function BuffCheck3:CheckExpirationTimes()
     if mainHandExpiration then
         mainHandExpiration = mainHandExpiration / 1000
     end
+
+    -- check for sheild
+    if not BuffCheck3:ItemIsEnchantable(GetInventoryItemLink("player", GetInventorySlotInfo("SecondaryHandSlot"))) then
+        offHandExpiration = nil
+    end
     if offHandExpiration then
         offHandExpiration = offHandExpiration / 1000
     end
-    BuffCheck3:GiveWepExpirationWarning(mainHandExpiration, offHandExpiration)
+    BuffCheck3:CheckWepExpiration(mainHandExpiration, offHandExpiration)
 end
 
-function BuffCheck3:GiveFiveMinWarning(consume)
-    local buffname, spellid = GetItemSpell(consume)
-    if buffname == "Food" then
-        consume = "Food Buff"
-    end
-    if not BuffCheck3:HasValue(BuffCheck3_ExpirationWarnings["five"], consume) then
-        BuffCheck3:SendExpirationMessage(consume, " has 5 minutes remaining")
-        table.insert(BuffCheck3_ExpirationWarnings["five"], consume)
-    end
-end
-
-function BuffCheck3:GiveTwoMinWarning(consume)
-    local buffname, spellid = GetItemSpell(consume)
-    if buffname == "Food" then
-        consume = "Food Buff"
-    end
-    if not BuffCheck3:HasValue(BuffCheck3_ExpirationWarnings["two"], consume) then
-        BuffCheck3:SendExpirationMessage(consume, " has 2 minutes remaining")
-        table.insert(BuffCheck3_ExpirationWarnings["two"], consume)
-    end
-end
-
-function BuffCheck3:GiveWepExpirationWarning(exp1, exp2)
+function BuffCheck3:CheckWepExpiration(exp1, exp2)
     -- update duration text
-    if exp1 and exp2 then
+    if exp1 and exp2 then  -- both active, set to lowest timer
         if exp1 < exp2 then
             BuffCheck3:SetWepDuration(exp1)
         else
             BuffCheck3:SetWepDuration(exp2)
         end
-    elseif exp2 and BuffCheck3:ItemIsEnchantable(GetInventoryItemLink("player", GetInventorySlotInfo("SecondaryHandSlot"))) then
+    -- offhand is active but not mainhand
+    elseif exp2 then
         BuffCheck3:SetWepDuration(exp2)
+    -- either mainhand or neither is active - doesnt matter just set mainhand
     else
         BuffCheck3:SetWepDuration(exp1)
     end
-    -- mainhand
-    if exp1 then
-        BuffCheck3.MHWasActive = true
-        if exp1 < 120 then -- 2 mins
-            BuffCheck3:GiveTwoMinWeaponWarning("mainhand")
-        elseif exp1 < 300 then -- 5 mins
-            BuffCheck3:GiveFiveMinWeaponWarning("mainhand")
-        elseif BuffCheck3:HasGivenExpirationWarning("mainhand") then
-            -- refreshed SetDurationconsume
-            BuffCheck3:ClearExpirationTimer(f.consume)
-            BuffCheck3:SetWepDuration(0)
-        end
-    elseif exp1 == nil and BuffCheck3.MHWasActive then
-        BuffCheck3.MHWasActive = false
-        BuffCheck3:SendExpirationMessage(GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot")), " has expired")
-        BuffCheck3:ClearExpirationTimer("mainhand")
-    end
-    -- offhand
-    if exp2 then
-        BuffCheck3.OHWasActive = true
-        if exp2 < 120 then -- 2 mins
-            BuffCheck3:GiveTwoMinWeaponWarning("offhand")
-        elseif exp2 < 300 then -- 5 mins
-            BuffCheck3:GiveFiveMinWeaponWarning("offhand")
-        elseif BuffCheck3:HasGivenExpirationWarning("offhand") then
-            -- refreshed SetDurationconsume
-            BuffCheck3:ClearExpirationTimer(f.consume)
-            BuffCheck3:SetWepDuration(0)
-        end
-    elseif exp2 == nil and BuffCheck3.OHWasActive then
-        BuffCheck3.OHWasActive = false
-        local ohlink = GetInventoryItemLink("player", GetInventorySlotInfo("SecondaryHandSlot"))
-        if BuffCheck3:ItemIsEnchantable(ohlink) then
-            -- dont want to print if player swaps from oh -> shield
-            BuffCheck3:SendExpirationMessage(ohlink, " has expired")
-        end
-        BuffCheck3:ClearExpirationTimer("offhand")
-    end
-end
-
-function BuffCheck3:GiveFiveMinWeaponWarning(wep)
-    if not BuffCheck3:HasValue(BuffCheck3_ExpirationWarnings["five"], wep) then
-        local link
-        if wep == "mainhand" then
-            link = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
-        else
-            link = GetInventoryItemLink("player", GetInventorySlotInfo("SecondaryHandSlot"))
-        end
-        BuffCheck3:SendWeaponExpirationMessage("5 minutes remaining on ", link)
-        table.insert(BuffCheck3_ExpirationWarnings["five"], wep)
-    end
-end
-
-function BuffCheck3:GiveTwoMinWeaponWarning(wep)
-    if not BuffCheck3:HasValue(BuffCheck3_ExpirationWarnings["two"], wep) then
-        local link
-        if wep == "mainhand" then
-            link = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
-        else
-            link = GetInventoryItemLink("player", GetInventorySlotInfo("SecondaryHandSlot"))
-        end
-        BuffCheck3:SendWeaponExpirationMessage("2 minutes remaining on ", link)
-        table.insert(BuffCheck3_ExpirationWarnings["two"], wep)
-    end
-end
-
--- NOTE: consume includes "mainhand"/"offhand" here
-function BuffCheck3:ClearExpirationTimer(consume)
-    -- for weapon structure is ["two"/"five"] = {1: "mainhand", 2: "offhand"}
-    -- for everything else ["two"/"five"] = {1: consume 2: consume ... }
-    local buffname = GetItemSpell(consume)
-    if buffname == "Food" then
-        consume = "Food Buff"
-    end
-    local index = BuffCheck3:GetIndexInTable(BuffCheck3_ExpirationWarnings["two"], consume)
-    if index ~= -1 then
-        table.remove(BuffCheck3_ExpirationWarnings["two"], index)
-    end
-    local index = BuffCheck3:GetIndexInTable(BuffCheck3_ExpirationWarnings["five"], consume)
-    if index ~= -1 then
-        table.remove(BuffCheck3_ExpirationWarnings["five"], index)
-    end
+    -- if 0 < exp1 or exp2 < 120 then flash all weapon buttons
+    BuffCheck3:FlashWeaponBuffs((exp1 and exp1 < 120) or (exp2 and exp2 < 120))
 end
 
 function BuffCheck3:HasGivenExpirationWarning(consume)
-    local buffname, spellid = GetItemSpell(consume)
-    if BuffCheck3:IsWeaponBuff(consume) then
-        if BuffCheck3:GetIndexInTable(BuffCheck3_ExpirationWarnings["two"], "mainhand") ~= -1 then
-            return true
-        end
-        if BuffCheck3:GetIndexInTable(BuffCheck3_ExpirationWarnings["two"], "offhand") ~= -1 then
-            return true
-        end
-        if BuffCheck3:GetIndexInTable(BuffCheck3_ExpirationWarnings["five"], "mainhand") ~= -1 then
-            return true
-        end
-        if BuffCheck3:GetIndexInTable(BuffCheck3_ExpirationWarnings["five"], "offhand") ~= -1 then
-            return true
-        end
-    else
-        if buffname == "Food" then
-            consume = "Food Buff"
-        end
-        if BuffCheck3:GetIndexInTable(BuffCheck3_ExpirationWarnings["two"], consume) ~= -1 then
-            return true
-        end
-        if BuffCheck3:GetIndexInTable(BuffCheck3_ExpirationWarnings["five"], consume) ~= -1 then
-            return true
-        end
+    local _, expiration = BuffCheck3:IsBuffPresent(consume)
+    if expiration then return expiration < 300 end
+
+    -- weapon buff
+    local _, mainHandExpiration, _, _, _, offHandExpiration = GetWeaponEnchantInfo()
+    if mainHandExpiration then
+        mainHandExpiration = mainHandExpiration / 1000
     end
-    return false
+
+    -- check for sheild
+    if not BuffCheck3:ItemIsEnchantable(GetInventoryItemLink("player", GetInventorySlotInfo("SecondaryHandSlot"))) then
+        offHandExpiration = nil
+    end
+    if offHandExpiration then
+        offHandExpiration = offHandExpiration / 1000
+    end
+
+    return (mainHandExpiration and mainHandExpiration < 300) or (offHandExpiration and offHandExpiration < 300)
 end
 
 --=================================================================
@@ -948,7 +733,8 @@ function BuffCheck3:CreateConsumeFrameButton(consume)
     local fname = "BuffCheck3FrameButton" .. table.getn(BuffCheck3.AllConsumeButtons)
 
     -- more info on the item
-    local _, _, _, _, _, _, _, _, _, texture = GetItemInfo(consume)
+    local texture = GetItemIcon(consume)
+
     f = CreateFrame("Button", fname, parent, "BuffCheck3ButtonTemplate")
     f.consume = consume
 
@@ -1007,26 +793,6 @@ function BuffCheck3:SortConsumeFrameButtons()
             end
         end
     end
-    -- checking for consumes that went from Active to Inactive
-    -- it will print "has expired" for each food buff, quick fix
-    local printedFoodBuff = false
-    for _, f in pairs(BuffCheck3.InactiveConsumes) do
-        if f.WasActive then
-            -- too much work to track which weapon specifically lost the buff
-            local buffname, spellid = GetItemSpell(f.consume)
-            if buffname == "Food" then
-                if not printedFoodBuff then
-                    BuffCheck3:SendExpirationMessage("Food Buff", " has expired")
-                    BuffCheck3:ClearExpirationTimer("Food Buff")
-                    printedFoodBuff = true
-                end
-            else
-                BuffCheck3:SendExpirationMessage(f.consume, " has expired")
-                BuffCheck3:ClearExpirationTimer(f.consume)
-            end
-            f.WasActive = false
-        end
-    end
 end
 
 function BuffCheck3:HideConsumeFrameButton(consume)
@@ -1056,13 +822,20 @@ end
 function BuffCheck3:ShowInactiveConsumes()
     local parent = getglobal("BuffCheck3Frame")
     local numInactive = table.getn(BuffCheck3.InactiveConsumes)
+    local offset = 33
+
+    for _, f in pairs(BuffCheck3.InactiveConsumes) do
+        if UIFrameIsFlashing(f) then
+            UIFrameFlashStop(f)
+        end
+    end
 
     if BuffCheck3_Config["vertical"] then
         BuffCheck3:HideActiveButtons()
         local i = 1
         for _, f in pairs(BuffCheck3.InactiveConsumes) do
             f:ClearAllPoints()
-            f:SetPoint("TOPLEFT", parent, "TOPLEFT", 11, -11 - 36*(i-1))
+            f:SetPoint("TOPLEFT", parent, "TOPLEFT", 11, -11 - offset*(i-1))
             getglobal(f:GetName() .. "Duration"):SetText("")
             f:Show()
             i = i + 1
@@ -1071,7 +844,7 @@ function BuffCheck3:ShowInactiveConsumes()
         for _, f in pairs(BuffCheck3.ActiveConsumes) do
             if BuffCheck3:HasGivenExpirationWarning(f.consume) then
                 f:ClearAllPoints()
-                f:SetPoint("TOPLEFT", parent, "TOPLEFT", 11, -11 - 36*(i-1))
+                f:SetPoint("TOPLEFT", parent, "TOPLEFT", 11, -11 - offset*(i-1))
                 f:Show()
                 numInactive = numInactive + 1
                 i = i + 1
@@ -1079,14 +852,14 @@ function BuffCheck3:ShowInactiveConsumes()
         end
        -- update dimensions
        BuffCheck3Frame:SetWidth(52)
-       BuffCheck3Frame:SetHeight(52 + 36*(numInactive -1))
+       BuffCheck3Frame:SetHeight(52 + offset*(numInactive -1))
     else
         -- horizontal
         BuffCheck3:HideActiveButtons()
         local i = 1
         for _, f in pairs(BuffCheck3.InactiveConsumes) do
             f:ClearAllPoints()
-            f:SetPoint("TOPLEFT", parent, "TOPLEFT", 11 + 36*(i-1), -11)
+            f:SetPoint("TOPLEFT", parent, "TOPLEFT", 11 + offset*(i-1), -11)
             getglobal(f:GetName() .. "Duration"):SetText("")
             f:Show()
             i = i + 1
@@ -1095,14 +868,14 @@ function BuffCheck3:ShowInactiveConsumes()
         for _, f in pairs(BuffCheck3.ActiveConsumes) do
             if BuffCheck3:HasGivenExpirationWarning(f.consume) then
                 f:ClearAllPoints()
-                f:SetPoint("TOPLEFT", parent, "TOPLEFT", 11 + 36*(i-1), -11)
+                f:SetPoint("TOPLEFT", parent, "TOPLEFT", 11 + offset*(i-1), -11)
                 f:Show()
                 numInactive = numInactive + 1
                 i = i + 1
             end
         end
         -- update dimensions
-        BuffCheck3Frame:SetWidth(52 + 36*(numInactive -1))
+        BuffCheck3Frame:SetWidth(52 + offset*(numInactive -1))
         BuffCheck3Frame:SetHeight(52)
     end
 
@@ -1127,6 +900,40 @@ function BuffCheck3:SetWepDuration(exp1)
     for _, f in pairs(BuffCheck3.ActiveConsumes) do
         if BuffCheck3:IsWeaponBuff(f.consume) then
             BuffCheck3:FormatDuration(f, exp1)
+        end
+    end
+    for _, f in pairs(BuffCheck3.InactiveConsumes) do
+        if BuffCheck3:IsWeaponBuff(f.consume) then
+            BuffCheck3:FormatDuration(f, exp1)
+        end
+    end
+end
+
+function BuffCheck3:FlashWeaponBuffs(flash)
+    for _, f in pairs(BuffCheck3.ActiveConsumes) do
+        if BuffCheck3:IsWeaponBuff(f.consume) then
+            if flash then
+                if not UIFrameIsFlashing(f) then
+                    UIFrameFlash(f, 0.5, 0.5, -1)
+                end
+            else
+                if UIFrameIsFlashing(f) then
+                    UIFrameFlashStop(f)
+                end
+            end
+        end
+    end
+    for _, f in pairs(BuffCheck3.InactiveConsumes) do
+        if BuffCheck3:IsWeaponBuff(f.consume) then
+            if flash then
+                if not UIFrameIsFlashing(f) then
+                    UIFrameFlash(f, 0.5, 0.5, -1)
+                end
+            else
+                if UIFrameIsFlashing(f) then
+                    UIFrameFlashStop(f)
+                end
+            end
         end
     end
 end
@@ -1191,7 +998,7 @@ end
 
 function BuffCheck3:ShowWeaponButtons(f)
     BuffCheck3WeaponFrame:ClearAllPoints()
-    BuffCheck3WeaponFrame:SetPoint("TOPLEFT", f, "TOPLEFT", -36, -36)
+    BuffCheck3WeaponFrame:SetPoint("TOPLEFT", f, "TOPLEFT", -33, -33)
 
     -- mainhand
     local mainHandTexture = GetInventoryItemTexture("player", GetInventorySlotInfo("MainHandSlot"))
@@ -1201,7 +1008,7 @@ function BuffCheck3:ShowWeaponButtons(f)
         
         -- set the onclick attribute for SecureActionButton
         local link = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
-        BuffCheck3WeaponButton1:SetAttribute("item", BuffCheck3:GetRawName(link))
+        BuffCheck3WeaponButton1:SetAttribute("item", BuffCheck3:LinkToName(link))
     else
         BuffCheck3WeaponButton1:Hide()
     end
@@ -1214,7 +1021,7 @@ function BuffCheck3:ShowWeaponButtons(f)
         
         -- set the onclick attribute for SecureActionButton
         local link = GetInventoryItemLink("player", GetInventorySlotInfo("SecondaryHandSlot"))
-        BuffCheck3WeaponButton2:SetAttribute("item", BuffCheck3:GetRawName(link))
+        BuffCheck3WeaponButton2:SetAttribute("item", BuffCheck3:LinkToName(link))
     else
         BuffCheck3WeaponButton2:Hide()
     end
@@ -1230,18 +1037,8 @@ function BuffCheck3:SendMessage(msg)
     DEFAULT_CHAT_FRAME:AddMessage(string.format(BuffCheck3_PrintFormat, "BuffCheck3: ") .. msg)
 end
 
-function BuffCheck3:SendWeaponExpirationMessage(msg, wep)
-    local msg = string.format(BuffCheck3_PrintFormat, msg)
-    DEFAULT_CHAT_FRAME:AddMessage(string.format(BuffCheck3_PrintFormat, "BuffCheck3: ") .. msg .. wep)
-end
-
-function BuffCheck3:SendExpirationMessage(consume, msg)
-    local msg = string.format(BuffCheck3_PrintFormat, msg)
-    DEFAULT_CHAT_FRAME:AddMessage(string.format(BuffCheck3_PrintFormat, "BuffCheck3: ") .. consume .. msg)
-end
-
 -- used for debug
-function BuffCheck3:GetRawName(consume)
+function BuffCheck3:LinkToName(consume)
     -- matches text inside square brackets ex: [...] -> ...
     return string.match(consume, "%[(.+)%]")
 end
@@ -1276,6 +1073,21 @@ function BuffCheck3:tprint(tbl, indent)
         if type(v) == "table" then
             DEFAULT_CHAT_FRAME:AddMessage(formatting)
             BuffCheck3:tprint(v, indent+1)
+        elseif type(v) == 'boolean' then
+            DEFAULT_CHAT_FRAME:AddMessage(formatting .. tostring(v))
+        else
+            DEFAULT_CHAT_FRAME:AddMessage(formatting .. v)
+        end
+    end
+end
+
+tprint = function(tbl, indent)
+    if not indent then indent = 0 end
+    for k, v in pairs(tbl) do
+        local formatting = string.rep("  ", indent) .. k .. ": "
+        if type(v) == "table" then
+            DEFAULT_CHAT_FRAME:AddMessage(formatting)
+            tprint(v, indent+1)
         elseif type(v) == 'boolean' then
             DEFAULT_CHAT_FRAME:AddMessage(formatting .. tostring(v))
         else

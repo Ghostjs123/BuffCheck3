@@ -3,7 +3,7 @@
 ## Version: 1.0
 ## Notes: Consume Manager
 ## Author: Kaymon
-## SavedVariables: BuffCheck3_TestTable
+## SavedVariables: BuffCheck3_Textures
 ## SavedVariablesPerCharacter: BuffCheck3_SavedConsumes, BuffCheck3_Config
 BuffCheck3.lua
 BuffCheck3.xml

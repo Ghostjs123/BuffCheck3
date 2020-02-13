@@ -5,12 +5,10 @@ Wow 1.13 addon to monitor consumes
 
 **Usage:**<br/>
 Add each consume using the update command below The interface will only display an icon of 
-the consume when the consume is not active. Right clicking the icon uses the consume.
-Also gives a five and two minute expiration warning for each consume, then gives another message when the consume expires.<br/>
+the consume when the consume is not active. Right clicking the icon uses the consume.<br/>
 
 **Notes:**
 * The frame cannot update when in combat
-* Displays the true amount of buffs on your character (gear enchants from items etc)
 
 **Commands:**<br/><br/>
 /bc **update**
@@ -44,10 +42,6 @@ Also gives a five and two minute expiration warning for each consume, then gives
 /bc **resize** **number**
 
    - scales the frame, default is 100
-
-/bc **highestcount**
-
-   - prints the highest buff count for this session (max 32)
 
 /bc **missing**
 
