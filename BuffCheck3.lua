@@ -81,6 +81,156 @@ BuffCheck3.FoodBuffList = {
     "Mana Regeneration"
 }
 
+if GetLocale() == "frFR" then
+	BuffCheck3.ValidItemSubtypes = {
+		"Haches à une main",
+		"Haches à deux mains",
+		"Masses à une main",
+		"Masses à deux mains",
+		"Armes d'hast",
+		"Epées à une main",
+		"Epées à deux mains",
+		"Bâtons",
+		"Armes de pugilat",
+		"Dagues",
+		"Canne à pêche"
+	}
+
+elseif GetLocale() == "deDE" then
+	BuffCheck3.ValidItemSubtypes = {
+		"Einhandäxte",
+		"Zweihandäxte",
+		"Einhandstreitkolben",
+		"Zweihandstreitkolben",
+		"Stangenwaffen",
+		"Einhandschwerter",
+		"Zweihandschwerter",
+		"Stäbe",
+		"Faustwaffen",
+		"Dolche",
+		"Angel"
+	}
+
+elseif GetLocale() == "koKR" then
+	BuffCheck3.ValidItemSubtypes = {
+		"한손 도끼류",
+		"양손 도끼류",
+		"한손 둔기류",
+		"양손 둔기류",
+		"장창류",
+		"한손 도검류",
+		"양손 도검류",
+		"지팡이류",
+		"장착 무기류",
+		"단검류",
+		"낚싯대"
+	}
+
+elseif GetLocale() == "zhCN" then
+	BuffCheck3.ValidItemSubtypes = {
+		"单手斧",
+		"双手斧",
+		"单手锤",
+		"双手锤",
+		"长柄武器",
+		"单手剑",
+		"双手剑",
+		"法杖",
+		"拳套",
+		"匕首",
+		"鱼竿"
+	}
+
+elseif GetLocale() == "zhTW" then
+	BuffCheck3.ValidItemSubtypes = {
+		"單手斧",
+		"雙手斧",
+		"單手錘",
+		"雙手錘",
+		"長柄武器",
+		"單手劍",
+		"雙手劍",
+		"法杖",
+		"拳套",
+		"匕首",
+		"魚竿"
+	}
+
+elseif GetLocale() == "ruRU" then
+	BuffCheck3.ValidItemSubtypes = {
+		"Одноручные топоры",
+		"Двуручные топоры",
+		"Одноручное дробящее",
+		"Двуручное дробящее",
+		"Древковое",
+		"Одноручные мечи",
+		"Двуручные мечи",
+		"Посохи",
+		"Кистевое",
+		"Кинжалы",
+		"Удочка"
+	}
+
+elseif GetLocale() == "esES" then
+	BuffCheck3.ValidItemSubtypes = {
+		"Hachas de una mano",
+		"Hachas de dos manos",
+		"Mazas de una mano",
+		"Mazas de dos manos",
+		"Armas de asta",
+		"Espadas de una mano",
+		"Espadas de dos manos",
+		"Bastones",
+		"Armas de puño",
+		"Dagas",
+		"Cañas de pescar"
+	}
+
+elseif GetLocale() == "esMX" then
+	BuffCheck3.ValidItemSubtypes = {
+		"Hachas de una mano",
+		"Hachas de dos manos",
+		"Mazas de una mano",
+		"Mazas de dos manos",
+		"Armas de asta",
+		"Espadas de una mano",
+		"Espadas de dos manos",
+		"Bastones",
+		"Armas de puño",
+		"Dagas",
+		"Caña de pescar"
+	}
+
+elseif GetLocale() == "ptBR" then
+	BuffCheck3.ValidItemSubtypes = {
+		"Machados de Uma Mão",
+		"Machados de Duas Mãos",
+		"Maças de Uma Mão",
+		"Maças de Duas Mãos",
+		"Armas de Haste",
+		"Espadas de Uma Mão",
+		"Espadas de Duas Mãos",
+		"Báculos",
+		"Armas de punho",
+		"Adagas",
+		"Vara de Pescar"
+	}
+else
+	BuffCheck3.ValidItemSubtypes = {
+		"One-Handed Axes",
+		"Two-Handed Axes",
+		"One-Handed Maces",
+		"Two-Handed Maces",
+		"Polearms",
+		"One-Handed Swords",
+		"Two-Handed Swords",
+		"Staves",
+		"Fist Weapons",
+		"Daggers",
+		"Fishing Pole"
+	}
+end
+
 SLASH_BUFFCHECK1 = "/bc"
 SLASH_BUFFCHECK2 = "/buffcheck"
 function SlashCmdList.BUFFCHECK(args)
@@ -639,8 +789,7 @@ function BuffCheck3:ItemIsEnchantable(itemlink)
     if itemlink == nil then return false end
     local _, _, _, _, _, _, sType = GetItemInfo(itemlink)
     if sType == nil then return false end
-    local c = string.sub(sType, 0, 1)
-    return c == "O" or c == "D" or c == "T" or c == "F"
+    return BuffCheck3:HasValue(BuffCheck3.ValidItemSubtypes, sType)
 end
 
 --=================================================================
