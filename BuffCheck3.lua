@@ -1198,26 +1198,26 @@ function BuffCheck3:ShowWeaponButtons(f)
 
     -- mainhand
     local mainHandTexture = GetInventoryItemTexture("player", GetInventorySlotInfo("MainHandSlot"))
-    if mainHandTexture then
+    local mainHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
+    if mainHandTexture and BuffCheck3:ItemIsEnchantable(mainHandLink) then
         BuffCheck3WeaponButton1Icon:SetTexture(mainHandTexture)
         BuffCheck3WeaponButton1:Show()
         
         -- set the onclick attribute for SecureActionButton
-        local link = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
-        BuffCheck3WeaponButton1:SetAttribute("item", BuffCheck3:LinkToName(link))
+        BuffCheck3WeaponButton1:SetAttribute("item", BuffCheck3:LinkToName(mainHandLink))
     else
         BuffCheck3WeaponButton1:Hide()
     end
 
     -- offhand
     local offHandTexture = GetInventoryItemTexture("player", GetInventorySlotInfo("SecondaryHandSlot"))
-    if offHandTexture then
+    local offHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("SecondaryHandSlot"))
+    if offHandTexture and BuffCheck3:ItemIsEnchantable(offHandLink) then
         BuffCheck3WeaponButton2Icon:SetTexture(offHandTexture)
         BuffCheck3WeaponButton2:Show()
         
         -- set the onclick attribute for SecureActionButton
-        local link = GetInventoryItemLink("player", GetInventorySlotInfo("SecondaryHandSlot"))
-        BuffCheck3WeaponButton2:SetAttribute("item", BuffCheck3:LinkToName(link))
+        BuffCheck3WeaponButton2:SetAttribute("item", BuffCheck3:LinkToName(offHandLink))
     else
         BuffCheck3WeaponButton2:Hide()
     end
