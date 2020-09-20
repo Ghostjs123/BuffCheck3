@@ -7,3 +7,4 @@
 ## SavedVariablesPerCharacter: BuffCheck3_SavedConsumes, BuffCheck3_Config
 BuffCheck3.lua
 BuffCheck3.xml
+Bindings.xml
