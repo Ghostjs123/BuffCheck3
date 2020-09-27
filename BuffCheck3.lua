@@ -12,6 +12,11 @@ BINDING_NAME_BUFFCHECK3_CONSUME7 = "Consume 7"
 BINDING_NAME_BUFFCHECK3_CONSUME8 = "Consume 8"
 BINDING_NAME_BUFFCHECK3_CONSUME9 = "Consume 9"
 BINDING_NAME_BUFFCHECK3_CONSUME10 = "Consume 10"
+for i = 1, 10 do
+    target = "BINDING_NAME_CLICK BuffCheck3FrameButton" .. (i-1) .. ":RightButton"
+    value = getglobal("BINDING_NAME_BUFFCHECK3_CONSUME" .. i)
+    setglobal(target, value)
+end
 
 BuffCheck3_DefaultFrameSize = 100
 
@@ -309,6 +314,8 @@ function BuffCheck3:Init()
     BuffCheck3:ShowFrame(BuffCheck3_Config["showing"])
     
     BuffCheck3:VerticalFrame(BuffCheck3_Config["vertical"])
+
+    BuffCheck3:FixPosition()
 
     BuffCheck3:UpdateBagContents()
 
@@ -1042,7 +1049,7 @@ function BuffCheck3:ShowInactiveConsumes()
             f:SetPoint("TOPLEFT", parent, "TOPLEFT", 11 + offset*(i-1), -11)
             getglobal(f:GetName() .. "Duration"):SetText("")
             if i < 11 then
-                getglobal(f:GetName().."Num"):SetText(i-1)
+                getglobal(f:GetName().."Num"):SetText(i)
             else
                 getglobal(f:GetName().."Num"):SetText("")
             end
@@ -1055,7 +1062,7 @@ function BuffCheck3:ShowInactiveConsumes()
                 f:ClearAllPoints()
                 f:SetPoint("TOPLEFT", parent, "TOPLEFT", 11 + offset*(i-1), -11)
                 if i < 11 then
-                    getglobal(f:GetName().."Num"):SetText(i-1)
+                    getglobal(f:GetName().."Num"):SetText(i)
                 else
                     getglobal(f:GetName().."Num"):SetText("")
                 end
@@ -1151,6 +1158,23 @@ function BuffCheck3:FormatDuration(f, exp1)
     else
         fdur:SetText(exp1)
     end
+end
+
+function BuffCheck3:SavePosition(frame)
+    point, _, relativePoint, xOfs, yOfs = frame:GetPoint()
+    BuffCheck3_Config["point"] = point
+    -- BuffCheck3_Config["relativePoint"] = relativePoint
+    BuffCheck3_Config["xOfs"] = xOfs
+    BuffCheck3_Config["yOfs"] = yOfs
+end
+
+function BuffCheck3:FixPosition()
+    getglobal("BuffCheck3Frame"):SetPoint(
+        BuffCheck3_Config["point"],
+        -- BuffCheck3_Config["relativePoint"],
+        BuffCheck3_Config["xOfs"],
+        BuffCheck3_Config["yOfs"]
+    )
 end
 
 --=================================================================
