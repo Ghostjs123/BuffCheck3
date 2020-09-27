@@ -47,5 +47,5 @@ the consume when the consume is not active. Right clicking the icon uses the con
 
    - prints any added consume that is missing from your bags
 
-This addon was made by Kaymon-Incendius \<Scuba Cops>. If you find
+This addon was made by Kaymon-Netherwind \<Scuba Cops>. If you find
 any bugs or issues with the addon contact him in game or on discord Kaymon#3528.
