@@ -1,0 +1,22 @@
+<Bindings>
+	<Binding name="CLICK BuffCheck3FrameButton0:RightButton" header="BUFFCHECK3">
+	</Binding>
+	<Binding name="CLICK BuffCheck3FrameButton1:RightButton">
+	</Binding>
+	<Binding name="CLICK BuffCheck3FrameButton2:RightButton">
+	</Binding>
+	<Binding name="CLICK BuffCheck3FrameButton3:RightButton">
+	</Binding>
+	<Binding name="CLICK BuffCheck3FrameButton4:RightButton">
+	</Binding>
+	<Binding name="CLICK BuffCheck3FrameButton5:RightButton">
+	</Binding>
+	<Binding name="CLICK BuffCheck3FrameButton6:RightButton">
+	</Binding>
+	<Binding name="CLICK BuffCheck3FrameButton7:RightButton">
+	</Binding>
+	<Binding name="CLICK BuffCheck3FrameButton8:RightButton">
+	</Binding>
+	<Binding name="CLICK BuffCheck3FrameButton9:RightButton">
+	</Binding>
+</Bindings>

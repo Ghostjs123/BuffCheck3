@@ -42,6 +42,18 @@
                 <Texture name="$parentIcon"/>
             </Layer>
             <Layer level="ARTWORK">
+                <FontString name="$parentNum" font="GameFontNormal" justifyH="LEFT">
+                    <Size>
+                        <AbsDimension x="20" y="20"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="LEFT" relativeTo="$parentIcon" relativePoint="RIGHT">
+                            <Offset>
+                                <AbsDimension x="-10" y="9"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
                 <FontString name="$parentCount" font="GameFontNormal" justifyH="LEFT">
                     <Size>
                         <AbsDimension x="20" y="20"/>
