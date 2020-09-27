@@ -1,6 +1,18 @@
 BuffCheck3 = {}
 BuffCheck3.debugmode = true;
 
+BINDING_HEADER_BUFFCHECK3 = "BuffCheck3"
+BINDING_NAME_BUFFCHECK3_CONSUME1 = "Consume 1"
+BINDING_NAME_BUFFCHECK3_CONSUME2 = "Consume 2"
+BINDING_NAME_BUFFCHECK3_CONSUME3 = "Consume 3"
+BINDING_NAME_BUFFCHECK3_CONSUME4 = "Consume 4"
+BINDING_NAME_BUFFCHECK3_CONSUME5 = "Consume 5"
+BINDING_NAME_BUFFCHECK3_CONSUME6 = "Consume 6"
+BINDING_NAME_BUFFCHECK3_CONSUME7 = "Consume 7"
+BINDING_NAME_BUFFCHECK3_CONSUME8 = "Consume 8"
+BINDING_NAME_BUFFCHECK3_CONSUME9 = "Consume 9"
+BINDING_NAME_BUFFCHECK3_CONSUME10 = "Consume 10"
+
 BuffCheck3_DefaultFrameSize = 100
 
 -- saved variables
@@ -68,6 +80,156 @@ BuffCheck3.FoodBuffList = {
     "Blessed Sunfruit Juice",
     "Mana Regeneration"
 }
+
+if GetLocale() == "frFR" then
+	BuffCheck3.ValidItemSubtypes = {
+		"Haches à une main",
+		"Haches à deux mains",
+		"Masses à une main",
+		"Masses à deux mains",
+		"Armes d'hast",
+		"Epées à une main",
+		"Epées à deux mains",
+		"Bâtons",
+		"Armes de pugilat",
+		"Dagues",
+		"Canne à pêche"
+	}
+
+elseif GetLocale() == "deDE" then
+	BuffCheck3.ValidItemSubtypes = {
+		"Einhandäxte",
+		"Zweihandäxte",
+		"Einhandstreitkolben",
+		"Zweihandstreitkolben",
+		"Stangenwaffen",
+		"Einhandschwerter",
+		"Zweihandschwerter",
+		"Stäbe",
+		"Faustwaffen",
+		"Dolche",
+		"Angel"
+	}
+
+elseif GetLocale() == "koKR" then
+	BuffCheck3.ValidItemSubtypes = {
+		"한손 도끼류",
+		"양손 도끼류",
+		"한손 둔기류",
+		"양손 둔기류",
+		"장창류",
+		"한손 도검류",
+		"양손 도검류",
+		"지팡이류",
+		"장착 무기류",
+		"단검류",
+		"낚싯대"
+	}
+
+elseif GetLocale() == "zhCN" then
+	BuffCheck3.ValidItemSubtypes = {
+		"单手斧",
+		"双手斧",
+		"单手锤",
+		"双手锤",
+		"长柄武器",
+		"单手剑",
+		"双手剑",
+		"法杖",
+		"拳套",
+		"匕首",
+		"鱼竿"
+	}
+
+elseif GetLocale() == "zhTW" then
+	BuffCheck3.ValidItemSubtypes = {
+		"單手斧",
+		"雙手斧",
+		"單手錘",
+		"雙手錘",
+		"長柄武器",
+		"單手劍",
+		"雙手劍",
+		"法杖",
+		"拳套",
+		"匕首",
+		"魚竿"
+	}
+
+elseif GetLocale() == "ruRU" then
+	BuffCheck3.ValidItemSubtypes = {
+		"Одноручные топоры",
+		"Двуручные топоры",
+		"Одноручное дробящее",
+		"Двуручное дробящее",
+		"Древковое",
+		"Одноручные мечи",
+		"Двуручные мечи",
+		"Посохи",
+		"Кистевое",
+		"Кинжалы",
+		"Удочка"
+	}
+
+elseif GetLocale() == "esES" then
+	BuffCheck3.ValidItemSubtypes = {
+		"Hachas de una mano",
+		"Hachas de dos manos",
+		"Mazas de una mano",
+		"Mazas de dos manos",
+		"Armas de asta",
+		"Espadas de una mano",
+		"Espadas de dos manos",
+		"Bastones",
+		"Armas de puño",
+		"Dagas",
+		"Cañas de pescar"
+	}
+
+elseif GetLocale() == "esMX" then
+	BuffCheck3.ValidItemSubtypes = {
+		"Hachas de una mano",
+		"Hachas de dos manos",
+		"Mazas de una mano",
+		"Mazas de dos manos",
+		"Armas de asta",
+		"Espadas de una mano",
+		"Espadas de dos manos",
+		"Bastones",
+		"Armas de puño",
+		"Dagas",
+		"Caña de pescar"
+	}
+
+elseif GetLocale() == "ptBR" then
+	BuffCheck3.ValidItemSubtypes = {
+		"Machados de Uma Mão",
+		"Machados de Duas Mãos",
+		"Maças de Uma Mão",
+		"Maças de Duas Mãos",
+		"Armas de Haste",
+		"Espadas de Uma Mão",
+		"Espadas de Duas Mãos",
+		"Báculos",
+		"Armas de punho",
+		"Adagas",
+		"Vara de Pescar"
+	}
+else
+	BuffCheck3.ValidItemSubtypes = {
+		"One-Handed Axes",
+		"Two-Handed Axes",
+		"One-Handed Maces",
+		"Two-Handed Maces",
+		"Polearms",
+		"One-Handed Swords",
+		"Two-Handed Swords",
+		"Staves",
+		"Fist Weapons",
+		"Daggers",
+		"Fishing Pole"
+	}
+end
 
 SLASH_BUFFCHECK1 = "/bc"
 SLASH_BUFFCHECK2 = "/buffcheck"
@@ -286,7 +448,7 @@ function BuffCheck3:CreateConsumeListButton(consume)
         + table.getn(BuffCheck3.AddedButtons))
 
     -- more info on the item
-    local link, quality, texture = BuffCheck3:FindTextureInfo(consume)
+    local link, quality, texture, _ = BuffCheck3:FindTextureInfo(consume)
 
     -- create the button
     f = CreateFrame("Button", fname, parent, "BuffCheck3ConsumeRowTemplate")
@@ -485,9 +647,9 @@ end
 -- return link, quality, texture if in BuffCheck3_Config
 function BuffCheck3:FindTextureInfo(consume)
     if BuffCheck3_Textures[consume] then
-        return BuffCheck3_Textures[consume].link, BuffCheck3_Textures[consume].quality, BuffCheck3_Textures[consume].texture
+        return BuffCheck3_Textures[consume].link, BuffCheck3_Textures[consume].quality, BuffCheck3_Textures[consume].texture, BuffCheck3_Textures.buffname
     end
-    return nil, nil, nil
+    return nil, nil, nil, nil
 end
 
 function BuffCheck3:UpdateBagContents()
@@ -503,7 +665,9 @@ function BuffCheck3:UpdateBagContents()
                 local _, _, _, _, _, itemType = GetItemInfo(link)
                 local buffname = GetItemSpell(link)
 
-                if name and buffname and (itemType == "Consumable" or itemType == "Quest" or string.match(name, "Sharpening") or string.match(name, "Weightstone") or string.match(name, "Aquadynamic")) then
+                if name and buffname and
+                        (itemType == "Consumable" or itemType == "Quest" or string.match(name, "Sharpening") or 
+                        string.match(name, "Weightstone") or string.match(name, "Aquadynamic") or string.match(name, "Oil")) then
                     -- add to BagContents
                     if BuffCheck3.BagContents[name] then
                         BuffCheck3.BagContents[name] = BuffCheck3.BagContents[name] + count
@@ -513,8 +677,12 @@ function BuffCheck3:UpdateBagContents()
 
                     -- if consume's texture not in Config then add it
                     if texture and not BuffCheck3_Textures[name] then
-                        BuffCheck3_Textures[name] = {link = link, texture = texture, quality = quality};
+                        BuffCheck3_Textures[name] = {link = link, texture = texture, quality = quality, buffname = buffname};
                         BuffCheck3:SendMessage("Saved info for " .. tostring(link))
+                    end
+
+                    if buffname and not BuffCheck3_Textures[name].buffname then
+                        BuffCheck3_Textures[name].buffname = buffname
                     end
                 end
             end
@@ -551,21 +719,24 @@ function BuffCheck3:IsWeaponBuff(consume)
     if buffname == nil then
         if consume == "mainhand" or consume == "offhand" then
             return true
+        else
+            _, _, _, buffname = BuffCheck3:FindTextureInfo(consume)
+            if buffname == nil then return false end
         end
     end
     local words = {}
     for word in buffname:gmatch("%w+") do table.insert(words, word) end
-    return words[1] == "Sharpen" or words[1] == "Enhance" or words[1] == "Deadly" or words[1] == "Crippling" 
+    return BuffCheck3:HasValue(words, "Sharpen") or words[1] == "Enhance" or words[1] == "Deadly" or words[1] == "Crippling" 
             or words[1] == "Mind-numbing" or words[1] == "Wound" or words[1] == "Instant" or words[1] == "Shiny" 
-            or words[1] == "Aquadynamic" or words[1] == "Nightcrawlers" or words[1] == "Flesh"
+            or words[1] == "Aquadynamic" or words[1] == "Nightcrawlers" or words[1] == "Flesh" or BuffCheck3:HasValue(words, "Oil")
 end
 
 function BuffCheck3:IsWeaponBuffName(buffname)
     local words = {}
     for word in buffname:gmatch("%w+") do table.insert(words, word) end
-    return words[1] == "Sharpen" or words[1] == "Enhance" or words[1] == "Deadly" or words[1] == "Crippling" 
+    return BuffCheck3:HasValue(words, "Sharpen") or words[1] == "Enhance" or words[1] == "Deadly" or words[1] == "Crippling" 
             or words[1] == "Mind-numbing" or words[1] == "Wound" or words[1] == "Instant" or words[1] == "Shiny" 
-            or words[1] == "Aquadynamic" or words[1] == "Nightcrawlers" or words[1] == "Flesh"
+            or words[1] == "Aquadynamic" or words[1] == "Nightcrawlers" or words[1] == "Flesh" or BuffCheck3:HasValue(words, "Oil")
 end
 
 function BuffCheck3:IsWeaponBuffsPresent()
@@ -618,8 +789,7 @@ function BuffCheck3:ItemIsEnchantable(itemlink)
     if itemlink == nil then return false end
     local _, _, _, _, _, _, sType = GetItemInfo(itemlink)
     if sType == nil then return false end
-    local c = string.sub(sType, 0, 1)
-    return c == "O" or c == "D" or c == "T" or c == "F"
+    return BuffCheck3:HasValue(BuffCheck3.ValidItemSubtypes, sType)
 end
 
 --=================================================================
@@ -691,7 +861,14 @@ function BuffCheck3:HasGivenExpirationWarning(consume)
         offHandExpiration = offHandExpiration / 1000
     end
 
-    return (mainHandExpiration and mainHandExpiration < 300) or (offHandExpiration and offHandExpiration < 300)
+    local faction = UnitFactionGroup("player")
+    local class = UnitClass("player")
+    if (faction == "Horde" and (class == "Warrior" or class == "Rogue")) then
+        result = offHandExpiration and offHandExpiration < 300
+    else
+        result = (mainHandExpiration and mainHandExpiration < 300) or (offHandExpiration and offHandExpiration < 300)
+    end
+    return result
 end
 
 --=================================================================
@@ -734,6 +911,9 @@ function BuffCheck3:CreateConsumeFrameButton(consume)
 
     -- more info on the item
     local texture = GetItemIcon(consume)
+    if texture == nil then
+        _, _, texture = BuffCheck3:FindTextureInfo(consume)
+    end
 
     f = CreateFrame("Button", fname, parent, "BuffCheck3ButtonTemplate")
     f.consume = consume
@@ -861,6 +1041,11 @@ function BuffCheck3:ShowInactiveConsumes()
             f:ClearAllPoints()
             f:SetPoint("TOPLEFT", parent, "TOPLEFT", 11 + offset*(i-1), -11)
             getglobal(f:GetName() .. "Duration"):SetText("")
+            if i < 11 then
+                getglobal(f:GetName().."Num"):SetText(i-1)
+            else
+                getglobal(f:GetName().."Num"):SetText("")
+            end
             f:Show()
             i = i + 1
         end
@@ -869,6 +1054,11 @@ function BuffCheck3:ShowInactiveConsumes()
             if BuffCheck3:HasGivenExpirationWarning(f.consume) then
                 f:ClearAllPoints()
                 f:SetPoint("TOPLEFT", parent, "TOPLEFT", 11 + offset*(i-1), -11)
+                if i < 11 then
+                    getglobal(f:GetName().."Num"):SetText(i-1)
+                else
+                    getglobal(f:GetName().."Num"):SetText("")
+                end
                 f:Show()
                 numInactive = numInactive + 1
                 i = i + 1
@@ -968,6 +1158,9 @@ end
 
 function BuffCheck3:ShowConsumeListTooltip(consume, name)
     local _, link = GetItemInfo(consume)
+    if link == nil then
+        link = BuffCheck3:FindTextureInfo(consume)
+    end
     GameTooltip:SetOwner(getglobal(name), "ANCHOR_BOTTOMRIGHT")
     GameTooltip:SetHyperlink(link)
     GameTooltip:Show()
@@ -975,6 +1168,9 @@ end
 
 function BuffCheck3:ShowConsumeFrameTooltip(consume, name)
     local _, link = GetItemInfo(consume)
+    if link == nil then
+        link = BuffCheck3:FindTextureInfo(consume)
+    end
     GameTooltip:SetOwner(getglobal(name), "ANCHOR_BOTTOMRIGHT")
     GameTooltip:SetHyperlink(link)
     GameTooltip:Show()
