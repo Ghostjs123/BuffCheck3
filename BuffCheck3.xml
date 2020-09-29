@@ -352,7 +352,7 @@
             </OnDragStart>
             <OnDragStop>
                 self:StopMovingOrSizing()
-                BuffCheck3:SavePosition(self)
+                BuffCheck3:SavePosition()
             </OnDragStop>
         </Scripts>
         

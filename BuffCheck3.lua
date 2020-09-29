@@ -283,7 +283,6 @@ end
 
 function BuffCheck3:OnLoad(self)
     self:RegisterEvent("ADDON_LOADED")
-    -- self:RegisterEvent("PLAYER_AURAS_CHANGED") -- deprecated event
     self:RegisterEvent("UNIT_INVENTORY_CHANGED")
     self:RegisterEvent("BAG_UPDATE")
 end
@@ -315,13 +314,13 @@ function BuffCheck3:Init()
     
     BuffCheck3:VerticalFrame(BuffCheck3_Config["vertical"])
 
-    BuffCheck3:FixPosition()
-
     BuffCheck3:UpdateBagContents()
+    
+    -- fix/save x,y position
+    BuffCheck3:FixPosition()
 
     -- set the OnUpdate event
     BuffCheck3UpdateFrame:SetScript("OnUpdate", BuffCheck3_OnUpdate)
-
 
     BuffCheck3:SendMessage("Init Successful")
 end
@@ -1160,18 +1159,20 @@ function BuffCheck3:FormatDuration(f, exp1)
     end
 end
 
-function BuffCheck3:SavePosition(frame)
-    point, _, relativePoint, xOfs, yOfs = frame:GetPoint()
+function BuffCheck3:SavePosition()
+    point, _, relativePoint, xOfs, yOfs = BuffCheck3Frame:GetPoint()
     BuffCheck3_Config["point"] = point
-    -- BuffCheck3_Config["relativePoint"] = relativePoint
     BuffCheck3_Config["xOfs"] = xOfs
     BuffCheck3_Config["yOfs"] = yOfs
 end
 
 function BuffCheck3:FixPosition()
-    getglobal("BuffCheck3Frame"):SetPoint(
+    if BuffCheck3_Config["point"] == nil then
+        BuffCheck3:SavePosition(BuffCheck3Frame)
+    end
+
+    BuffCheck3Frame:SetPoint(
         BuffCheck3_Config["point"],
-        -- BuffCheck3_Config["relativePoint"],
         BuffCheck3_Config["xOfs"],
         BuffCheck3_Config["yOfs"]
     )
