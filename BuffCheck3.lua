@@ -642,10 +642,10 @@ end
 -- will auto show/hide the BuffCheck3Frame based on group type
 function BuffCheck3:CheckGroupUpdate()
     -- NOTE: BuffCheck3_Config["showing"] must be false to auto show/hide
-    if not BuffCheck3Frame:IsShown() and UnitInRaid("player") and BuffCheck3_Config["showing"] == false then
+    if not BuffCheck3Frame:IsShown() and UnitInRaid("player") and BuffCheck3_Config["showing"] == false and not UnitInBattleground("player") then
         BuffCheck3Frame:Show()
     end
-    if BuffCheck3Frame:IsShown() and not UnitInRaid("player") and BuffCheck3_Config["showing"] == false then
+    if BuffCheck3Frame:IsShown() and not UnitInRaid("player") and BuffCheck3_Config["showing"] == false and not UnitInBattleground("player") then
         BuffCheck3Frame:Hide()
     end
 end
@@ -730,18 +730,14 @@ function BuffCheck3:IsWeaponBuff(consume)
             if buffname == nil then return false end
         end
     end
-    local words = {}
-    for word in buffname:gmatch("%w+") do table.insert(words, word) end
-    return BuffCheck3:HasValue(words, "Sharpen") or words[1] == "Enhance" or words[1] == "Deadly" or words[1] == "Crippling" 
-            or words[1] == "Mind-numbing" or words[1] == "Wound" or words[1] == "Instant" or words[1] == "Shiny" 
-            or words[1] == "Aquadynamic" or words[1] == "Nightcrawlers" or words[1] == "Flesh" or BuffCheck3:HasValue(words, "Oil")
+    return BuffCheck3:IsWeaponBuffName(buffname)
 end
 
 function BuffCheck3:IsWeaponBuffName(buffname)
     local words = {}
     for word in buffname:gmatch("%w+") do table.insert(words, word) end
     return BuffCheck3:HasValue(words, "Sharpen") or words[1] == "Enhance" or words[1] == "Deadly" or words[1] == "Crippling" 
-            or words[1] == "Mind-numbing" or words[1] == "Wound" or words[1] == "Instant" or words[1] == "Shiny" 
+            or words[1] == "Mind-numbing" or words[1] == "Wound" or words[1] == "Instant" or words[1] == "Shiny" or words[1] == "Consecrated"
             or words[1] == "Aquadynamic" or words[1] == "Nightcrawlers" or words[1] == "Flesh" or BuffCheck3:HasValue(words, "Oil")
 end
 
