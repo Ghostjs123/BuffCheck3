@@ -783,7 +783,7 @@ function BuffCheck3:IsBuffPresent(consume)
 
     -- checking consume buff
     for x = 1, 32 do
-        local name, _, _, _, _, expires, _, _, _, _, buff_spellid = UnitBuff("player", x)
+        local name, _, _, _, _, expires, _, _, _, buff_spellid = UnitBuff("player", x)
         if name == buffname then
             if name ~= "Mana Regeneration" then
                 return true, expires - GetTime()
