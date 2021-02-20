@@ -82,8 +82,7 @@ BuffCheck3.FoodBuffList = {
     "Increased Agility",
     "Brain Food",
     "Blessed Sunfruit",
-    "Blessed Sunfruit Juice",
-    "Mana Regeneration"
+    "Blessed Sunfruit Juice"
 }
 
 if GetLocale() == "frFR" then
@@ -712,9 +711,14 @@ end
 
 function BuffCheck3:IsFoodBuffPresent()
     for x = 1, 32 do
-        local name, _, _, _, _, expires = UnitBuff("player", x)
+        local name, _, _, _, _, expires, _, _, _, buff_spellid = UnitBuff("player", x)
         if BuffCheck3:HasValue(BuffCheck3.FoodBuffList, name) then
             return true, expires - GetTime()
+        elseif buff_spellid == 18194 then  -- Mana Regeneration from Nightfin Soup
+            return true, expires - GetTime()
+        end
+        if name == nil and buff_spellid == nil then
+            break
         end
     end
     return false, 0
@@ -779,9 +783,16 @@ function BuffCheck3:IsBuffPresent(consume)
 
     -- checking consume buff
     for x = 1, 32 do
-        local name, _, _, _, _, expires = UnitBuff("player", x)
+        local name, _, _, _, _, expires, _, _, _, _, buff_spellid = UnitBuff("player", x)
         if name == buffname then
-            return true, expires - GetTime()
+            if name ~= "Mana Regeneration" then
+                return true, expires - GetTime()
+            else 
+                -- special case for Nightfin Soup vs Mageblood Potion, each give a buff w/ the same name
+                if spellid == buff_spellid then
+                    return true, expires - GetTime()
+                end
+            end
         end
     end
     return false, 0
