@@ -794,6 +794,12 @@ function BuffCheck3:IsBuffPresent(consume)
                 end
             end
         end
+        -- checking deviate
+        if buffname == "Cooked Deviate Fish" then
+            if name == "Flip Out" or name == "Yaaarrrr" then
+                return true, expires - GetTime()
+            end
+        end
     end
     return false, 0
 end
