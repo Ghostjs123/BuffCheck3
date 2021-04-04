@@ -19,6 +19,7 @@ for i = 1, 10 do
 end
 
 BuffCheck3_DefaultFrameSize = 100
+BuffCheck3_HasShown = false
 
 -- saved variables
 BuffCheck3_Textures = {}
@@ -45,20 +46,6 @@ BuffCheck3.InactiveConsumes = {}
 BuffCheck3.AvailableButtons = {}
 BuffCheck3.AddedButtons = {}
 
-BuffCheck3.LockedBackdrop = {
-    bgFile = "Interface/DialogFrame/UI-DialogBox-Background",
-    tileSize = 32,
-    edgeFile = "Interface/DialogFrame/UI-DialogBox-Border",
-    tile = true,
-    tileEdge = false,
-    edgeSize = 1,
-    insets = {
-        top = 12,
-        right = 12,
-        left = 11,
-        bottom = 11
-    }
-}
 BuffCheck3.UnlockedBackdrop = {
     bgFile = "Interface/DialogFrame/UI-DialogBox-Background",
     tileSize = 32,
@@ -586,7 +573,7 @@ end
 function BuffCheck3:LockFrame(shouldlock, shouldprint)
     BuffCheck3_Config["locked"] = shouldlock
     if shouldlock then
-        BuffCheck3Frame:SetBackdrop(BuffCheck3.LockedBackdrop)
+        BuffCheck3Frame:SetBackdrop(nil)
         BuffCheck3Frame:EnableMouse(false)
         if shouldprint ~= false then
             BuffCheck3:SendMessage("Interface locked")
@@ -641,11 +628,15 @@ end
 -- will auto show/hide the BuffCheck3Frame based on group type
 function BuffCheck3:CheckGroupUpdate()
     -- NOTE: BuffCheck3_Config["showing"] must be false to auto show/hide
-    if not BuffCheck3Frame:IsShown() and UnitInRaid("player") and BuffCheck3_Config["showing"] == false and not UnitInBattleground("player") then
-        BuffCheck3Frame:Show()
+    if not BuffCheck3_HasShown then
+        if not BuffCheck3Frame:IsShown() and UnitInRaid("player") and BuffCheck3_Config["showing"] == false and not UnitInBattleground("player") then
+            BuffCheck3Frame:Show()
+            BuffCheck3_HasShown = true
+        end
     end
     if BuffCheck3Frame:IsShown() and not UnitInRaid("player") and BuffCheck3_Config["showing"] == false and not UnitInBattleground("player") then
         BuffCheck3Frame:Hide()
+        BuffCheck3_HasShown = false
     end
 end
 
