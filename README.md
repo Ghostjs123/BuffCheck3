@@ -15,6 +15,10 @@ the consume when the consume is not active. Right clicking the icon uses the con
 
   - displays a menu to add/remove consumes from the frame
 
+/bc **options**
+
+   - opens the options frame
+
 /bc **show**
   
   - shows the frame

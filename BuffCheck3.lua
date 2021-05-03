@@ -1,3 +1,5 @@
+local LCG = LibStub('LibCustomGlow-1.0')
+
 BuffCheck3 = {}
 BuffCheck3.debugmode = true;
 
@@ -20,6 +22,9 @@ end
 
 BuffCheck3_DefaultFrameSize = 100
 BuffCheck3_HasShown = false
+
+local two_min = 120
+local five_min = 300
 
 -- saved variables
 BuffCheck3_Textures = {}
@@ -60,6 +65,9 @@ BuffCheck3.UnlockedBackdrop = {
         bottom = 11
     }
 }
+
+-- OptionsFrame
+BuffCheck3.CheckboxFrames = {}
 
 -- work around for GetItemSpell() returning only "Food" for food buffs
 BuffCheck3.FoodBuffList = {
@@ -255,8 +263,10 @@ function SlashCmdList.BUFFCHECK(args)
         end
     elseif BuffCheck3:HasValue(words, "missing") then
         BuffCheck3:PrintMissing()
+    elseif BuffCheck3:HasValue(words, "options") then
+        BuffCheck3:ShowOptions()
     else
-        BuffCheck3:SendMessage("Options: update, show, hide, lock, unlock, vertical, horizontal, resize, missing")
+        BuffCheck3:SendMessage("Options: update, options, show, hide, lock, unlock, vertical, horizontal, resize, missing")
     end
 end
 
@@ -271,6 +281,13 @@ function BuffCheck3:OnLoad(self)
     self:RegisterEvent("ADDON_LOADED")
     self:RegisterEvent("UNIT_INVENTORY_CHANGED")
     self:RegisterEvent("BAG_UPDATE")
+end
+
+function BuffCheck3:OptionsInit()
+    local f = getglobal("BuffCheck3OptionsFrame")
+    BuffCheck3:BuildCheckBoxFrames(f)
+    BuffCheck3:BuildOptionButtons(f)
+    BuffCheck3:ShowOptions()
 end
 
 function BuffCheck3:CleanupSavedConsumes()
@@ -294,12 +311,8 @@ function BuffCheck3:Init()
 
     BuffCheck3:ResizeFrame(BuffCheck3_Config["scale"])
 
-    BuffCheck3:LockFrame(BuffCheck3_Config["locked"], false)
-
-    BuffCheck3:ShowFrame(BuffCheck3_Config["showing"])
+    BuffCheck3:Update()
     
-    BuffCheck3:VerticalFrame(BuffCheck3_Config["vertical"])
-
     BuffCheck3:UpdateBagContents()
     
     -- fix/save x,y position
@@ -311,13 +324,65 @@ function BuffCheck3:Init()
     BuffCheck3:SendMessage("Init Successful")
 end
 
+function BuffCheck3:Update()
+    BuffCheck3:LockFrame(BuffCheck3_Config["locked"], false)
+
+    BuffCheck3:ShowFrame(BuffCheck3_Config["showing"], false)
+    
+    BuffCheck3:VerticalFrame(BuffCheck3_Config["vertical"])
+end
+
 function BuffCheck3:OnEvent(event, arg1)
     if event == "ADDON_LOADED" and arg1 == "BuffCheck3" then
         BuffCheck3:Init()
+        BuffCheck3:OptionsInit()
     elseif event == "BAG_UPDATE" then
         BuffCheck3:UpdateBagContents()
         BuffCheck3:UpdateItemCounts()
     end
+end
+
+function BuffCheck3:NewCheckBox(parent, opt, text, num)
+    local f = CreateFrame("CheckButton", nil, parent, "UICheckButtonTemplate")
+    f:SetPoint("TOPLEFT", 14, -2-23*num)
+    f:SetFrameStrata("MEDIUM")
+    f:SetScript("OnClick", function (self) 
+		BuffCheck3_Config[opt] = f:GetChecked()
+        BuffCheck3:Update()
+    end)
+    f:SetScript("OnEnter", function(self) 
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+        GameTooltip:SetText(text, 255, 255, 0, 1, 1);
+        GameTooltip:Show()
+    end)
+    f:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    f:SetChecked(BuffCheck3_Config[opt])
+
+    f.text = f:CreateFontString(nil, "BORDER", "GameFontNormal")
+    f.text:SetJustifyH("RIGHT")
+    f.text:SetPoint("TOPLEFT", f, "TOPRIGHT", 0, -9)
+    f.text:SetText(text)
+end
+
+function BuffCheck3:BuildCheckBoxFrames(parent)
+    BuffCheck3.CheckboxFrames["Glow"] = BuffCheck3:NewCheckBox(parent, "Glow", "Glow in raids", 1)
+    BuffCheck3.CheckboxFrames["AlwaysShow"] = BuffCheck3:NewCheckBox(parent, "AlwaysShow", "Always show in raids", 2)
+    BuffCheck3.CheckboxFrames["FlipWeaponFrame"] = BuffCheck3:NewCheckBox(parent, "FlipWeaponFrame", "Flip weapon buttons", 3)
+    BuffCheck3.CheckboxFrames["vertical"] = BuffCheck3:NewCheckBox(parent, "vertical", "Make bar vertical", 4)
+    BuffCheck3.CheckboxFrames["locked"] = BuffCheck3:NewCheckBox(parent, "locked", "Lock bar", 5)
+    BuffCheck3.CheckboxFrames["ShowKeybinds"] = BuffCheck3:NewCheckBox(parent, "ShowKeybinds", "Show keybind numbers", 6)
+end
+
+function BuffCheck3:BuildOptionButtons(parent)
+    parent.updatebutton = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+	parent.updatebutton:SetPoint("BOTTOM", 0, 10)
+	parent.updatebutton:SetFrameStrata("MEDIUM")
+	parent.updatebutton:SetWidth(68)
+	parent.updatebutton:SetHeight(22)
+	parent.updatebutton:SetText("Update")
+	parent.updatebutton:SetScript("OnClick", function() 
+        BuffCheck3:ShowConsumeList()
+    end)
 end
 
 --=================================================================
@@ -362,13 +427,21 @@ function BuffCheck3_OnUpdate(self, elapsed)
             BuffCheck3.WasSpellTargeting = true
         end
 
-        -- check for item gcd
+        -- check for item gcd / glowing
         for _, f in pairs(BuffCheck3.InactiveConsumes) do
             -- NOTE: GetItemCooldown only takes itemID
             local _, link = GetItemInfo(f.consume)
             if link then
                 local start, duration = GetItemCooldown(BuffCheck3:LinkToID(link))
-                f.cooldown(start, duration)
+                f.Cooldown(start, duration)
+            end
+
+            if BuffCheck3_Config["Glow"] and BuffCheck3:InRaid() then
+                if not f.glowing then
+                    BuffCheck3:StartGlow(f)
+                end
+            elseif f.glowing then
+                BuffCheck3:StopGlow(f)
             end
         end
 
@@ -553,18 +626,18 @@ end
 -- Command Functions
 
 -- toggles visibility
-function BuffCheck3:ShowFrame(shouldshow)
+function BuffCheck3:ShowFrame(shouldshow, shouldprint)
     BuffCheck3_Config["showing"] = shouldshow
-    if not shouldshow then
-        -- Hide first so Show is the default
-        BuffCheck3Frame:Hide()
-        if shouldprint ~= false then
-            BuffCheck3:SendMessage("Interface hidden")
+    if not shouldshow and BuffCheck3_Config["AlwaysShow"] and BuffCheck3:InRaid() then
+        -- autoshow is happening
+        if shouldprint or shouldprint == nil then
+            BuffCheck3:SendMessage("Disable 'Always show in raids' to hide")
         end
     else
-        BuffCheck3Frame:Show()
-        if shouldprint ~= false then
-            BuffCheck3:SendMessage("Interface showing")
+        if shouldshow then
+            BuffCheck3Frame:Show()
+        else
+            BuffCheck3Frame:Hide()
         end
     end
 end
@@ -622,19 +695,23 @@ function BuffCheck3:PrintMissing()
     end
 end
 
+function BuffCheck3:ShowOptions()
+    BuffCheck3OptionsFrame:Show()
+    for _, f in pairs(BuffCheck3.CheckboxFrames) do
+        f:Show()
+    end
+end
+
 --=================================================================
 -- Main Addon Functions
 
--- will auto show/hide the BuffCheck3Frame based on group type
+-- will auto show the BuffCheck3Frame if in raid and AlwaysShow = true
 function BuffCheck3:CheckGroupUpdate()
-    -- NOTE: BuffCheck3_Config["showing"] must be false to auto show/hide
-    if not BuffCheck3_HasShown then
-        if not BuffCheck3Frame:IsShown() and UnitInRaid("player") and BuffCheck3_Config["showing"] == false and not UnitInBattleground("player") then
-            BuffCheck3Frame:Show()
-            BuffCheck3_HasShown = true
-        end
-    end
-    if BuffCheck3Frame:IsShown() and not UnitInRaid("player") and BuffCheck3_Config["showing"] == false and not UnitInBattleground("player") then
+    if BuffCheck3_Config["AlwaysShow"] and BuffCheck3:InRaid() then
+        BuffCheck3Frame:Show()
+        BuffCheck3_HasShown = true
+    elseif BuffCheck3_HasShown and not BuffCheck3_Config["AlwaysShow"] and not BuffCheck3_Config["showing"] then
+        -- player disabled AlwaysShow
         BuffCheck3Frame:Hide()
         BuffCheck3_HasShown = false
     end
@@ -810,7 +887,7 @@ function BuffCheck3:CheckExpirationTimes()
         if not BuffCheck3:IsWeaponBuff(f.consume) then -- weapon buff IsBuffPresent doesnt return time
             local _, exp1 = BuffCheck3:IsBuffPresent(f.consume)
             BuffCheck3:SetDuration(f, exp1)
-            if exp1 and exp1 < 120 then -- 2 mins
+            if exp1 and exp1 < two_min then -- 2 mins
                 UIFrameFlash(f, 0.5, 0.5, -1)
             elseif UIFrameIsFlashing(f) then
                 UIFrameFlashStop(f)
@@ -850,12 +927,12 @@ function BuffCheck3:CheckWepExpiration(exp1, exp2)
         BuffCheck3:SetWepDuration(exp1)
     end
     -- if 0 < exp1 or exp2 < 120 then flash all weapon buttons
-    BuffCheck3:FlashWeaponBuffs((exp1 and exp1 < 120) or (exp2 and exp2 < 120))
+    BuffCheck3:FlashWeaponBuffs((exp1 and exp1 < two_min) or (exp2 and exp2 < two_min))
 end
 
 function BuffCheck3:HasGivenExpirationWarning(consume)
     local _, expiration = BuffCheck3:IsBuffPresent(consume)
-    if expiration then return expiration < 300 end
+    if expiration then return expiration < five_min end
 
     -- weapon buff
     local _, mainHandExpiration, _, _, _, offHandExpiration = GetWeaponEnchantInfo()
@@ -874,9 +951,9 @@ function BuffCheck3:HasGivenExpirationWarning(consume)
     local faction = UnitFactionGroup("player")
     local class = UnitClass("player")
     if (faction == "Horde" and (class == "Warrior" or class == "Rogue")) then
-        result = offHandExpiration and offHandExpiration < 300
+        result = offHandExpiration and offHandExpiration < five_min
     else
-        result = (mainHandExpiration and mainHandExpiration < 300) or (offHandExpiration and offHandExpiration < 300)
+        result = (mainHandExpiration and mainHandExpiration < five_min) or (offHandExpiration and offHandExpiration < five_min)
     end
     return result
 end
@@ -933,13 +1010,15 @@ function BuffCheck3:CreateConsumeFrameButton(consume)
     icon:SetTexture(texture)
     icon:SetVertexColor(1,1,1)
 
-    --create cooldown frame
-    local myCooldown = CreateFrame("Cooldown", f:GetName().."Cooldown", f, "CooldownFrameTemplate")
-    myCooldown:SetAllPoints()
+    -- create cooldown frame
+    f.CooldownFrame = CreateFrame("Cooldown", f:GetName().."Cooldown", f, "CooldownFrameTemplate")
+    f.CooldownFrame:SetAllPoints()
 
-    f.cooldown = function(start, duration)
-        myCooldown:SetCooldown(start, duration)
+    f.Cooldown = function(start, duration)
+        f.CooldownFrame:SetCooldown(start, duration)
     end
+
+    f.glowing = false
 
     -- set the onclick attribute for SecureActionButton
     f:SetAttribute("item", consume)
@@ -1051,7 +1130,7 @@ function BuffCheck3:ShowInactiveConsumes()
             f:ClearAllPoints()
             f:SetPoint("TOPLEFT", parent, "TOPLEFT", 11 + offset*(i-1), -11)
             getglobal(f:GetName() .. "Duration"):SetText("")
-            if i < 11 then
+            if i < 11 and BuffCheck3_Config["ShowKeybinds"] then
                 getglobal(f:GetName().."Num"):SetText(i)
             else
                 getglobal(f:GetName().."Num"):SetText("")
@@ -1064,7 +1143,7 @@ function BuffCheck3:ShowInactiveConsumes()
             if BuffCheck3:HasGivenExpirationWarning(f.consume) then
                 f:ClearAllPoints()
                 f:SetPoint("TOPLEFT", parent, "TOPLEFT", 11 + offset*(i-1), -11)
-                if i < 11 then
+                if i < 11 and BuffCheck3_Config["ShowKeybinds"] then
                     getglobal(f:GetName().."Num"):SetText(i)
                 else
                     getglobal(f:GetName().."Num"):SetText("")
@@ -1223,12 +1302,36 @@ end
 
 function BuffCheck3:ShowWeaponButtons(f)
     BuffCheck3WeaponFrame:ClearAllPoints()
-    BuffCheck3WeaponFrame:SetPoint("TOPLEFT", f, "TOPLEFT", -33, -33)
 
-    -- mainhand
     local mainHandTexture = GetInventoryItemTexture("player", GetInventorySlotInfo("MainHandSlot"))
     local mainHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("MainHandSlot"))
-    if mainHandTexture and BuffCheck3:ItemIsEnchantable(mainHandLink) then
+    local offHandTexture = GetInventoryItemTexture("player", GetInventorySlotInfo("SecondaryHandSlot"))
+    local offHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("SecondaryHandSlot"))
+
+    local shouldShowMH = mainHandTexture and BuffCheck3:ItemIsEnchantable(mainHandLink)
+    local shouldShowOH = offHandTexture and BuffCheck3:ItemIsEnchantable(offHandLink)
+
+    local pos = {x = 0, y = 0}
+    if BuffCheck3_Config["vertical"] then
+        -- vertical
+        pos.x = -66
+        if BuffCheck3_Config["FlipWeaponFrame"] then
+            pos.x = 33
+        end
+    else
+        -- horizontal
+        pos.y = -33
+        if BuffCheck3_Config["FlipWeaponFrame"] then
+            pos.y = 33
+        end
+        if shouldShowOH then
+            pos.x = -33
+        end
+    end
+    BuffCheck3WeaponFrame:SetPoint("TOPLEFT", f, "TOPLEFT", pos.x, pos.y)
+
+    -- mainhand
+    if shouldShowMH then
         BuffCheck3WeaponButton1Icon:SetTexture(mainHandTexture)
         BuffCheck3WeaponButton1:Show()
         
@@ -1239,9 +1342,7 @@ function BuffCheck3:ShowWeaponButtons(f)
     end
 
     -- offhand
-    local offHandTexture = GetInventoryItemTexture("player", GetInventorySlotInfo("SecondaryHandSlot"))
-    local offHandLink = GetInventoryItemLink("player", GetInventorySlotInfo("SecondaryHandSlot"))
-    if offHandTexture and BuffCheck3:ItemIsEnchantable(offHandLink) then
+    if shouldShowOH then
         BuffCheck3WeaponButton2Icon:SetTexture(offHandTexture)
         BuffCheck3WeaponButton2:Show()
         
@@ -1256,6 +1357,25 @@ end
 
 --=================================================================
 -- Helper Functions
+
+function BuffCheck3:StartGlow(button)
+    -- button, color, frequency
+    LCG.ButtonGlow_Start(button, {0.95, 0.95, 0.32, 1}, 0.45)
+    button.glowing = true
+end
+
+function BuffCheck3:StopGlow(button)
+	LCG.ButtonGlow_Stop(button)
+    button.glowing = false
+end
+
+--=================================================================
+-- Helper Functions
+
+function BuffCheck3:InRaid()
+    local isInstance, instanceType = IsInInstance()
+    return isInstance and instanceType == "raid" and not UnitInBattleground("player")
+end
 
 function BuffCheck3:SendMessage(msg)
     local msg = string.format(BuffCheck3_PrintFormat, msg)
@@ -1323,6 +1443,6 @@ end
 
 function BuffCheck3:Test()
     for _, f in pairs(BuffCheck3.InactiveConsumes) do
-        f.cooldown(GetTime(), 10)
+        f.Cooldown(GetTime(), 10)
     end
 end

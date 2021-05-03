@@ -5,6 +5,9 @@
 ## Author: Kaymon
 ## SavedVariables: BuffCheck3_Textures
 ## SavedVariablesPerCharacter: BuffCheck3_SavedConsumes, BuffCheck3_Config
+
+libs\load_libs.xml
+
 BuffCheck3.lua
 BuffCheck3.xml
 Bindings.xml

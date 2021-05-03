@@ -357,5 +357,87 @@
         
     </Frame>
 
+    <Frame name="BuffCheck3OptionsFrame" movable="true" parent="UIParent" enableMouse="true" hidden="true" mixin="BuffCheck3">
+        <TitleRegion setAllPoints="true"/>
+        <Size>
+            <AbsDimension x="200" y="200" />
+        </Size>
+        <Anchors>
+            <Anchor point="CENTER" />
+        </Anchors>
+        <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
+            <BackgroundInsets>
+                <AbsInset left="11" right="12" top="12" bottom="11" />
+                <Size>
+                    <AbsDimension x="54" y="54" />
+                </Size>
+            </BackgroundInsets>
+            <EdgeSize>
+                <AbsValue val="32" />
+            </EdgeSize>
+        </Backdrop>
+        <Scripts>
+            <OnLoad>
+                self:RegisterForDrag("LeftButton")
+			</OnLoad>
+            <OnDragStart>
+                self:StartMoving()
+            </OnDragStart>
+            <OnDragStop>
+                self:StopMovingOrSizing()
+            </OnDragStop>
+        </Scripts>
+
+        <Layers>
+            <Layer level="ARTWORK">
+                <Texture name="BuffCheck3OptionsFrameTitle" file="Interface\DialogFrame\UI-DialogBox-Header">
+                    <Size>
+                        <AbsDimension x="268" y="64" />
+                    </Size>
+                    <Anchors>
+                        <Anchor point="TOP">
+                            <Offset>
+                                <AbsDimension x="0" y="12" />
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </Texture>
+
+                <FontString name="BuffCheck3OptionsFrameTitleText" inherits="GameFontNormal" text="BuffCheck3 Options">
+                    <Anchors>
+                        <Anchor point="TOP" relativeTo="BuffCheck3OptionsFrame">
+                            <Offset>
+                                <AbsDimension x="0" y="-2" />
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </FontString>
+            </Layer>
+        </Layers>
+
+        <Frames>
+
+            <Button name="BuffCheck3OptionsFrameClose" inherits="GameMenuButtonTemplate" text="X">
+                <Size>
+                    <AbsDimension x="30" y="30"/>
+                </Size>
+                <Anchors>
+                    <Anchor point="TOPRIGHT" relativeTo="BuffCheck3OptionsFrame">
+                        <Offset>
+                            <AbsDimension x="-10" y="-10" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        BuffCheck3OptionsFrame:Hide()
+                    </OnClick>
+                </Scripts>
+            </Button>
+
+        </Frames>
+
+    </Frame>
+
     <Frame name="BuffCheck3UpdateFrame" />
 </Ui>
