@@ -287,7 +287,6 @@ function BuffCheck3:OptionsInit()
     local f = getglobal("BuffCheck3OptionsFrame")
     BuffCheck3:BuildCheckBoxFrames(f)
     BuffCheck3:BuildOptionButtons(f)
-    BuffCheck3:ShowOptions()
 end
 
 function BuffCheck3:CleanupSavedConsumes()
