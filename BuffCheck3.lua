@@ -432,7 +432,8 @@ function BuffCheck3_OnUpdate(self, elapsed)
             local _, link = GetItemInfo(f.consume)
             if link then
                 local start, duration = GetItemCooldown(BuffCheck3:LinkToID(link))
-                f.Cooldown(start, duration)
+                f.CooldownFrame:SetCooldown(start, duration)
+                -- f.Cooldown(start, duration)
             end
 
             if BuffCheck3_Config["Glow"] and BuffCheck3:InRaid() then

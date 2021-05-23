@@ -220,7 +220,7 @@
         </Scripts>
     </Button>
 
-    <Frame name="BuffCheck3ConsumeList" toplevel="true" movable="true" parent="UIParent" enableMouse="true" hidden="true" mixin="BuffCheck3">
+    <Frame name="BuffCheck3ConsumeList" toplevel="true" movable="true" parent="UIParent" enableMouse="true" hidden="true" mixin="BuffCheck3,BackdropTemplateMixin" inherits="BackdropTemplate">
         <TitleRegion setAllPoints="true"/>
         <Size>
             <AbsDimension x="480" y="60" />
@@ -246,6 +246,14 @@
         <Scripts>
             <OnLoad>
                 self:RegisterForDrag("LeftButton")
+                self:SetBackdrop({
+                    bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background", 
+                    edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+                    tile = true,
+                    tileSize = 32,
+                    edgeSize = 32,
+                    insets = {left = 12, right = 12, top = 12, bottom = 11},
+                })
 			</OnLoad>
             <OnDragStart>
                 self:StartMoving()
@@ -319,7 +327,7 @@
         </Frames>
     </Frame>
 
-    <Frame name="BuffCheck3Frame" movable="true" parent="UIParent" enableMouse="true" hidden="false" mixin="BuffCheck3">
+    <Frame name="BuffCheck3Frame" movable="true" parent="UIParent" enableMouse="true" hidden="false" mixin="BuffCheck3,BackdropTemplateMixin" inherits="BackdropTemplate">
         <TitleRegion setAllPoints="true"/>
         <Size>
             <AbsDimension x="54" y="54" />
@@ -357,7 +365,7 @@
         
     </Frame>
 
-    <Frame name="BuffCheck3OptionsFrame" movable="true" parent="UIParent" enableMouse="true" hidden="true" mixin="BuffCheck3">
+    <Frame name="BuffCheck3OptionsFrame" movable="true" parent="UIParent" enableMouse="true" hidden="true" mixin="BuffCheck3,BackdropTemplateMixin" inherits="BackdropTemplate">
         <TitleRegion setAllPoints="true"/>
         <Size>
             <AbsDimension x="200" y="200" />
@@ -365,20 +373,17 @@
         <Anchors>
             <Anchor point="CENTER" />
         </Anchors>
-        <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
-            <BackgroundInsets>
-                <AbsInset left="11" right="12" top="12" bottom="11" />
-                <Size>
-                    <AbsDimension x="54" y="54" />
-                </Size>
-            </BackgroundInsets>
-            <EdgeSize>
-                <AbsValue val="32" />
-            </EdgeSize>
-        </Backdrop>
         <Scripts>
             <OnLoad>
                 self:RegisterForDrag("LeftButton")
+                self:SetBackdrop({
+                    bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background", 
+                    edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+                    tile = true,
+                    tileSize = 32,
+                    edgeSize = 32,
+                    insets = {left = 12, right = 12, top = 12, bottom = 11},
+                })
 			</OnLoad>
             <OnDragStart>
                 self:StartMoving()
