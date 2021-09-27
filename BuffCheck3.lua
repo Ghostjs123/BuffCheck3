@@ -816,9 +816,21 @@ end
 function BuffCheck3:IsWeaponBuffName(buffname)
     local words = {}
     for word in buffname:gmatch("%w+") do table.insert(words, word) end
-    return BuffCheck3:HasValue(words, "Sharpen") or words[1] == "Enhance" or words[1] == "Deadly" or words[1] == "Crippling" 
-            or words[1] == "Mind-numbing" or words[1] == "Wound" or words[1] == "Instant" or words[1] == "Shiny" or words[1] == "Consecrated"
-            or words[1] == "Aquadynamic" or words[1] == "Nightcrawlers" or words[1] == "Flesh" or BuffCheck3:HasValue(words, "Oil")
+    return 
+        BuffCheck3:HasValue(words, "Sharpen") or
+        BuffCheck3:HasValue(words, "Weight") or
+        words[1] == "Enhance" or
+        words[1] == "Deadly" or
+        words[1] == "Crippling" or
+        words[1] == "Mind-numbing" or
+        words[1] == "Wound" or
+        words[1] == "Instant" or
+        words[1] == "Shiny" or
+        words[1] == "Consecrated" or
+        words[1] == "Aquadynamic" or
+        words[1] == "Nightcrawlers" or
+        words[1] == "Flesh" or
+        BuffCheck3:HasValue(words, "Oil")
 end
 
 function BuffCheck3:IsWeaponBuffsPresent()
