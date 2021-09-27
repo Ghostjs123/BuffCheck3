@@ -739,8 +739,16 @@ function BuffCheck3:UpdateBagContents()
                 local buffname = GetItemSpell(link)
 
                 if name and buffname and
-                        (itemType == "Consumable" or itemType == "Quest" or string.match(name, "Sharpening") or 
-                        string.match(name, "Weightstone") or string.match(name, "Aquadynamic") or string.match(name, "Oil")) then
+                   (
+                       itemType == "Consumable" or
+                       itemType == "Quest" or
+                       name == "Demonic Rune" or
+                       name == "Dark Rune" or
+                       string.match(name, "Sharpening") or 
+                       string.match(name, "Weightstone") or
+                       string.match(name, "Aquadynamic") or
+                       string.match(name, "Oil")
+                   ) then
                     -- add to BagContents
                     if BuffCheck3.BagContents[name] then
                         BuffCheck3.BagContents[name] = BuffCheck3.BagContents[name] + count
