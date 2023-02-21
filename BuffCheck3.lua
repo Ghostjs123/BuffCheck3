@@ -870,7 +870,7 @@ function BuffCheck3:IsBuffPresent(consume)
     end
     
     -- checking food buffs
-    if buffname == "Food" then
+    if buffname == "Food" or buffname == "Refreshment" then
         return BuffCheck3:IsFoodBuffPresent()
     end
 
