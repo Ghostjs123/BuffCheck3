@@ -9,7 +9,6 @@ local GetContainerItemInfo = C_Container and _G.C_Container.GetContainerItemInfo
 local GetItemCooldown = C_Container and _G.C_Container.GetItemCooldown or _G.GetItemCooldown
 
 BuffCheck3 = {}
-BuffCheck3.debugmode = true;
 
 BINDING_HEADER_BUFFCHECK3 = "BuffCheck3"
 BINDING_NAME_BUFFCHECK3_CONSUME1 = "Consume 1"
@@ -358,8 +357,8 @@ function BuffCheck3:NewCheckBox(parent, opt, text, num)
         BuffCheck3:Update()
     end)
     f:SetScript("OnEnter", function(self) 
-        GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-        GameTooltip:SetText(text, 255, 255, 0, 1, 1);
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText(text, 255, 255, 0, 1, 1)
         GameTooltip:Show()
     end)
     f:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -769,8 +768,7 @@ function BuffCheck3:UpdateBagContents()
 
                         -- if consume's texture not in Config then add it
                         if texture and not BuffCheck3_Textures[name] then
-                            BuffCheck3_Textures[name] = {link = link, texture = texture, quality = quality, buffname = buffname};
-                            BuffCheck3:SendMessage("Saved info for " .. tostring(link))
+                            BuffCheck3_Textures[name] = {link = link, texture = texture, quality = quality, buffname = buffname}
                         end
 
                         if buffname and not BuffCheck3_Textures[name].buffname then
