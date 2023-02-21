@@ -1,5 +1,13 @@
 local LCG = LibStub('LibCustomGlow-1.0')
 
+local _G = _G
+local CreateFrame = _G.CreateFrame
+local GameTooltip = _G.GameTooltip
+local GetItemInfo = _G.GetItemInfo
+local GetContainerNumSlots = C_Container and _G.C_Container.GetContainerNumSlots or _G.GetContainerNumSlots
+local GetContainerItemInfo = C_Container and _G.C_Container.GetContainerItemInfo or _G.GetContainerItemInfo
+local GetItemCooldown = C_Container and _G.C_Container.GetItemCooldown or _G.GetItemCooldown
+
 BuffCheck3 = {}
 BuffCheck3.debugmode = true;
 
@@ -731,39 +739,43 @@ function BuffCheck3:UpdateBagContents()
     BuffCheck3.BagContents = {}
     for i = 0, 4 do
         for j = 1, GetContainerNumSlots(i) do
-            local texture, count, _, _, _, _, link = GetContainerItemInfo(i, j)
+            local info = GetContainerItemInfo(i, j)
 
-            if link then
-                local name, _, quality = GetItemInfo(link)
-                local _, _, _, _, _, itemType = GetItemInfo(link)
-                local buffname = GetItemSpell(link)
+            if info then
+                local texture, count, link = info.iconFileID, info.stackCount, info.hyperlink
 
-                if name and buffname and
-                   (
-                       itemType == "Consumable" or
-                       itemType == "Quest" or
-                       name == "Demonic Rune" or
-                       name == "Dark Rune" or
-                       string.match(name, "Sharpening") or 
-                       string.match(name, "Weightstone") or
-                       string.match(name, "Aquadynamic") or
-                       string.match(name, "Oil")
-                   ) then
-                    -- add to BagContents
-                    if BuffCheck3.BagContents[name] then
-                        BuffCheck3.BagContents[name] = BuffCheck3.BagContents[name] + count
-                    else
-                        BuffCheck3.BagContents[name] = count
-                    end
+                if link then
+                    local name, _, quality = GetItemInfo(link)
+                    local _, _, _, _, _, itemType = GetItemInfo(link)
+                    local buffname = GetItemSpell(link)
 
-                    -- if consume's texture not in Config then add it
-                    if texture and not BuffCheck3_Textures[name] then
-                        BuffCheck3_Textures[name] = {link = link, texture = texture, quality = quality, buffname = buffname};
-                        BuffCheck3:SendMessage("Saved info for " .. tostring(link))
-                    end
+                    if name and buffname and
+                    (
+                        itemType == "Consumable" or
+                        itemType == "Quest" or
+                        name == "Demonic Rune" or
+                        name == "Dark Rune" or
+                        string.match(name, "Sharpening") or 
+                        string.match(name, "Weightstone") or
+                        string.match(name, "Aquadynamic") or
+                        string.match(name, "Oil")
+                    ) then
+                        -- add to BagContents
+                        if BuffCheck3.BagContents[name] then
+                            BuffCheck3.BagContents[name] = BuffCheck3.BagContents[name] + count
+                        else
+                            BuffCheck3.BagContents[name] = count
+                        end
 
-                    if buffname and not BuffCheck3_Textures[name].buffname then
-                        BuffCheck3_Textures[name].buffname = buffname
+                        -- if consume's texture not in Config then add it
+                        if texture and not BuffCheck3_Textures[name] then
+                            BuffCheck3_Textures[name] = {link = link, texture = texture, quality = quality, buffname = buffname};
+                            BuffCheck3:SendMessage("Saved info for " .. tostring(link))
+                        end
+
+                        if buffname and not BuffCheck3_Textures[name].buffname then
+                            BuffCheck3_Textures[name].buffname = buffname
+                        end
                     end
                 end
             end
