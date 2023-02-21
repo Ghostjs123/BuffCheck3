@@ -437,10 +437,9 @@ function BuffCheck3_OnUpdate(self, elapsed)
         for _, f in pairs(BuffCheck3.InactiveConsumes) do
             -- NOTE: GetItemCooldown only takes itemID
             local _, link = GetItemInfo(f.consume)
-            if link then
+            if link and f.CooldownFrame then
                 local start, duration = GetItemCooldown(BuffCheck3:LinkToID(link))
                 f.CooldownFrame:SetCooldown(start, duration)
-                -- f.Cooldown(start, duration)
             end
 
             if BuffCheck3_Config["Glow"] and BuffCheck3:InRaid() then
@@ -744,8 +743,7 @@ function BuffCheck3:UpdateBagContents()
                 local texture, count, link = info.iconFileID, info.stackCount, info.hyperlink
 
                 if link then
-                    local name, _, quality = GetItemInfo(link)
-                    local _, _, _, _, _, itemType = GetItemInfo(link)
+                    local name, _, quality, _, _, itemType = GetItemInfo(link)
                     local buffname = GetItemSpell(link)
 
                     if name and buffname and
@@ -1043,10 +1041,6 @@ function BuffCheck3:CreateConsumeFrameButton(consume)
     -- create cooldown frame
     f.CooldownFrame = CreateFrame("Cooldown", f:GetName().."Cooldown", f, "CooldownFrameTemplate")
     f.CooldownFrame:SetAllPoints()
-
-    f.Cooldown = function(start, duration)
-        f.CooldownFrame:SetCooldown(start, duration)
-    end
 
     f.glowing = false
 
@@ -1468,11 +1462,5 @@ tprint = function(tbl, indent)
         else
             DEFAULT_CHAT_FRAME:AddMessage(formatting .. v)
         end
-    end
-end
-
-function BuffCheck3:Test()
-    for _, f in pairs(BuffCheck3.InactiveConsumes) do
-        f.Cooldown(GetTime(), 10)
     end
 end
