@@ -838,7 +838,9 @@ function BuffCheck3:IsWeaponBuffName(buffname)
         words[1] == "Aquadynamic" or
         words[1] == "Nightcrawlers" or
         words[1] == "Flesh" or
-        BuffCheck3:HasValue(words, "Oil")
+        BuffCheck3:HasValue(words, "Oil") or
+        BuffCheck3:HasValue(words, "Spellstone") or
+        BuffCheck3:HasValue(words, "Firestone")
 end
 
 function BuffCheck3:IsWeaponBuffsPresent()
