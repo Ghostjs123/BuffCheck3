@@ -16,10 +16,6 @@
                 getglobal(self:GetName().."Highlight"):Hide()
                 GameTooltip:Hide()
             </OnLoad>
-            <!-- Not allowed to overwrite SecureActionButtonTemplate's OnClick -->
-            <!-- <OnClick>
-                BuffCheck3:ButtonOnClick(self.consume)
-            </OnClick> -->
             <OnEnter>
                 getglobal(self:GetName().."Highlight"):Show()
                 if self.texture ~= "Interface\\Icons\\Spell_Nature_WispSplode" then
@@ -131,7 +127,6 @@
     </Button>
 
     <Frame name="BuffCheck3WeaponFrame" toplevel="true" movable="false" parent="UIParent" enableMouse="true" hidden="true">
-        <!-- <TitleRegion setAllPoints="true"/> -->
         <Size>
             <AbsDimension x="68" y="32" />
         </Size>
@@ -221,28 +216,12 @@
     </Button>
 
     <Frame name="BuffCheck3ConsumeList" toplevel="true" movable="true" parent="UIParent" enableMouse="true" hidden="true" mixin="BuffCheck3,BackdropTemplateMixin" inherits="BackdropTemplate">
-        <!-- <TitleRegion setAllPoints="true"/> -->
         <Size>
             <AbsDimension x="480" y="60" />
         </Size>
         <Anchors>
             <Anchor point="CENTER" />
         </Anchors>
-        <!-- <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border"
-                  tile="true">
-            <BackgroundInsets>
-                <AbsInset left="11" right="12" top="12" bottom="11" />
-                <Size>
-                    <AbsDimension x="54" y="54" />
-                </Size>
-            </BackgroundInsets>
-            <TileSize>
-                <AbsValue val="32" />
-            </TileSize>
-            <EdgeSize>
-                <AbsValue val="32" />
-            </EdgeSize>
-        </Backdrop> -->
         <Scripts>
             <OnLoad>
                 self:RegisterForDrag("LeftButton")
@@ -328,24 +307,12 @@
     </Frame>
 
     <Frame name="BuffCheck3Frame" movable="true" parent="UIParent" enableMouse="true" hidden="false" mixin="BuffCheck3,BackdropTemplateMixin" inherits="BackdropTemplate">
-        <!-- <TitleRegion setAllPoints="true"/> -->
         <Size>
             <AbsDimension x="54" y="54" />
         </Size>
         <Anchors>
             <Anchor point="CENTER" />
         </Anchors>
-        <!-- <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
-            <BackgroundInsets>
-                <AbsInset left="11" right="12" top="12" bottom="11" />
-                <Size>
-                    <AbsDimension x="54" y="54" />
-                </Size>
-            </BackgroundInsets>
-            <EdgeSize>
-                <AbsValue val="32" />
-            </EdgeSize>
-        </Backdrop> -->
         <Scripts>
             <OnLoad>
 				BuffCheck3:OnLoad(self)
@@ -366,7 +333,6 @@
     </Frame>
 
     <Frame name="BuffCheck3OptionsFrame" movable="true" parent="UIParent" enableMouse="true" hidden="true" mixin="BuffCheck3,BackdropTemplateMixin" inherits="BackdropTemplate">
-        <!-- <TitleRegion setAllPoints="true"/> -->
         <Size>
             <AbsDimension x="200" y="200" />
         </Size>
