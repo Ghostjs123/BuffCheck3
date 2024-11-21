@@ -737,10 +737,8 @@ function BuffCheck3:UpdateBagContents()
     BuffCheck3.BagContents = {}
     for i = 0, 4 do
         for j = 1, GetContainerNumSlots(i) do
-            local info = GetContainerItemInfo(i, j)
-
-            if info then
-                local texture, count, link = info.iconFileID, info.stackCount, info.hyperlink
+            local texture, count, _, _, _, _, link = GetContainerItemInfo(i, j)
+            if texture then
 
                 if link then
                     local name, _, quality, _, _, itemType = GetItemInfo(link)
