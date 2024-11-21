@@ -1,22 +1,12 @@
 <Bindings>
-	<Binding name="CLICK BuffCheck3FrameButton0:RightButton" header="BUFFCHECK3">
-	</Binding>
-	<Binding name="CLICK BuffCheck3FrameButton1:RightButton">
-	</Binding>
-	<Binding name="CLICK BuffCheck3FrameButton2:RightButton">
-	</Binding>
-	<Binding name="CLICK BuffCheck3FrameButton3:RightButton">
-	</Binding>
-	<Binding name="CLICK BuffCheck3FrameButton4:RightButton">
-	</Binding>
-	<Binding name="CLICK BuffCheck3FrameButton5:RightButton">
-	</Binding>
-	<Binding name="CLICK BuffCheck3FrameButton6:RightButton">
-	</Binding>
-	<Binding name="CLICK BuffCheck3FrameButton7:RightButton">
-	</Binding>
-	<Binding name="CLICK BuffCheck3FrameButton8:RightButton">
-	</Binding>
-	<Binding name="CLICK BuffCheck3FrameButton9:RightButton">
-	</Binding>
+	<Binding name="CLICK BuffCheck3FrameButton0:RightButton" header="BUFFCHECK3" category="BuffCheck3" />
+	<Binding name="CLICK BuffCheck3FrameButton1:RightButton" category="BuffCheck3" />
+	<Binding name="CLICK BuffCheck3FrameButton2:RightButton" category="BuffCheck3" />
+	<Binding name="CLICK BuffCheck3FrameButton3:RightButton" category="BuffCheck3" />
+	<Binding name="CLICK BuffCheck3FrameButton4:RightButton" category="BuffCheck3" />
+	<Binding name="CLICK BuffCheck3FrameButton5:RightButton" category="BuffCheck3" />
+	<Binding name="CLICK BuffCheck3FrameButton6:RightButton" category="BuffCheck3" />
+	<Binding name="CLICK BuffCheck3FrameButton7:RightButton" category="BuffCheck3" />
+	<Binding name="CLICK BuffCheck3FrameButton8:RightButton" category="BuffCheck3" />
+	<Binding name="CLICK BuffCheck3FrameButton9:RightButton" category="BuffCheck3" />
 </Bindings>

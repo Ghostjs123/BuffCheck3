@@ -1,4 +1,4 @@
-## Interface: 11300
+## Interface: 100200
 ## Title: BuffCheck3
 ## Version: 1.0
 ## Notes: Consume Manager
@@ -10,4 +10,3 @@ libs\load_libs.xml
 
 BuffCheck3.lua
 BuffCheck3.xml
-Bindings.xml

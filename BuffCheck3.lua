@@ -1386,13 +1386,17 @@ end
 
 function BuffCheck3:StartGlow(button)
     -- button, color, frequency
-    LCG.ButtonGlow_Start(button, {0.95, 0.95, 0.32, 1}, 0.45)
-    button.glowing = true
+    if button then
+        LCG.ButtonGlow_Start(button, {0.95, 0.95, 0.32, 1}, 0.45)
+        button.glowing = true
+    end
 end
 
 function BuffCheck3:StopGlow(button)
-	LCG.ButtonGlow_Stop(button)
-    button.glowing = false
+    if button then
+	    LCG.ButtonGlow_Stop(button)
+        button.glowing = false
+    end
 end
 
 --=================================================================
